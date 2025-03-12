@@ -1,0 +1,136 @@
+
+gcloud auth list
+sudo apt-get update
+sudo apt-get install -y nginx
+
+ps aux | grep nginx
+
+external - 34.85.132.145
+gclab2 - 35.194.80.108
+
+/////
+Create new instance with gcloud, Google Cloud Shell,
+
+export ZONE=us-east4-a
+gcloud compute instances create gcelab2 --machine-type e2-medium --zone=$ZONE
+
+o/p:
+Created [https://www.googleapis.com/compute/v1/projects/qwiklabs-gcp-01-bcd31b60b761/zones/us-east4-a/instances/gcelab2].
+NAME: gcelab2
+ZONE: us-east4-a
+MACHINE_TYPE: e2-medium
+PREEMPTIBLE: 
+INTERNAL_IP: 10.150.0.3
+EXTERNAL_IP: 35.194.80.108
+STATUS: RUNNING
+/////////
+
+gcloud compute ssh gcelab2 --zone=us-east4-a
+
+
+////
+
+gcloud compute instances get-serial-port-output win-server --zone=us-east1-d
+
+gcloud compute reset-windows-password win-server --zone us-east1-d --user admin
+
+gcloud config set compute/region europe-west1
+gcloud config get-value compute/region
+
+export PROJECT_ID=$(gcloud config get-value project)
+export ZONE=$(gcloud config get-value compute/zone)
+
+gcloud compute instances create <gcelab2> --machine-type e2-medium --zone $ZONE
+
+gcloud config list -all
+gcloud compute instances list
+gcloud compute instances list -filter="name=('gcelab2')"
+//////
+gcloud config set compute/region europe-west1
+gcloud config get-value compute/region
+
+gcloud config set compute/zone europe-west1-b
+gcloud config get-value compute/zone
+
+gcloud config get-value project
+
+gcloud compute project-info describe --project $(gcloud config get-value project)
+/////
+Setting Environment Variables -
+
+Create an environment variable to store your Project ID:
+
+export PROJECT_ID=$(gcloud config get-value project)
+Create an environment variable to store your Zone:
+
+export ZONE=$(gcloud config get-value compute/zone)
+
+To verify that your variables were set properly, run the following commands:
+
+echo -e "PROJECT ID: $PROJECT_ID\nZONE: $ZONE"
+
+create virtual machine using google cloud:
+gcloud compute instances create gcelab2 --machine-type e2-medium --zone $ZONE
+
+
+gcloud config list
+gcloud config list --all
+gcloud components list
+
+
+gcloud compute instances list
+gcloud compute instances list
+
+gcloud compute instances list --filter="name=('gcelab2')"
+gcloud compute firewall-rules list
+
+connect to you vm instance:
+gcloud compute ssh gcelab2 --zone $ZONE
+sudo apt install -y nginx
+exit
+
+gcloud compute instances add-tags gcelab2 --tags http-server,https-server
+gcloud compute firewall-rules create default-allow-http --direction=INGRESS --priority=1000 --network=default --action=ALLOW --rules=tcp:80 --source-ranges=0.0.0.0/0 --target-tags=http-server
+
+curl http://$(gcloud compute instances list --filter=name:gcelab2 --format='value(EXTERNAL_IP)')
+
+view logs on system:
+gcloud logging logs list
+gcloud logging logs list --filter="compute"
+gcloud logging read "resource.type=gce_instance" --limit 5
+gcloud logging read "resource.type=gce_instance AND labels.instance_name='gcelab2'" --limit 5
+
+/////
+Task 2. Create a GKE cluster
+
+gcloud config set compute/region us-east1
+gcloud config set compute/zone us-east1-d
+
+Create cluster:
+gcloud container clusters create --machine-type=e2-medium --zone=us-east1-d lab-cluster
+
+Authenticate with the cluster:
+gcloud container clusters get-credentials lab-cluster
+
+Task 4. Deploy an application to the cluster
+To create a new Deployment hello-server from the hello-app container image, run the following kubectl create command:
+
+kubectl create deployment hello-server --image=gcr.io/google-samples/hello-app:1.0
+
+To create a Kubernetes Service, which is a Kubernetes resource that lets you expose your application to external traffic, run the following kubectl expose command:
+kubectl expose deployment hello-server --type=LoadBalancer --port 8080
+
+To inspect the hello-server Service, run kubectl get:
+kubectl get service 
+o/p - 
+NAME           TYPE           CLUSTER-IP      EXTERNAL-IP    PORT(S)          AGE
+hello-server   LoadBalancer   34.118.229.61   35.196.49.44   8080:32169/TCP   47s
+kubernetes     ClusterIP      34.118.224.1    <none>         443/TCP          6m53s
+
+From browser: - 
+http://35.196.49.44:8080/
+
+
+Task 5. Delete the cluster
+gcloud container clusters delete lab-cluster
+
