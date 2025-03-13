@@ -1,0 +1,116 @@
+gcloud config set compute/zone us-east4-a
+
+Get the sample code for creating and running containers and deployments:
+
+gsutil -m cp -r gs://spls/gsp053/orchestrate-with-kubernetes .
+cd orchestrate-with-kubernetes/kubernetes
+
+Create a cluster with 3 nodes (this will take a few minutes to complete):
+
+gcloud container clusters create bootcamp \
+ --machine-type e2-small \
+ --num-nodes 3 \
+ --scopes "https://www.googleapis.com/auth/projecthosting,storage-rw"
+
+....
+
+Task 1. Learn about the deployment object
+To get started, take a look at the deployment object.
+
+The explain command in kubectl can tell us about the deployment object:
+kubectl explain deployment
+
+ou can also see all of the fields using the --recursive option:
+kubectl explain deployment --recursive
+
+You can use the explain command as you go through the lab to help you understand the structure of a deployment object and understand what the individual fields do:
+kubectl explain deployment.metadata.name
+
+
+Task 2. Create a deployment
+Update the deployments/auth.yaml configuration file:
+vi deployments/auth.yaml
+
+....
+...
+containers:
+- name: auth
+  image: "kelseyhightower/auth:1.0.0"
+...
+....
+
+Go ahead and create your deployment object using kubectl create:
+kubectl create -f deployments/auth.yaml
+
+Once you have created the deployment, you can verify that it was created:
+kubectl get deployments
+
+
+Once the deployment is created, Kubernetes will create a ReplicaSet for the deployment. You can verify that a ReplicaSet was created for the deployment:
+kubectl get replicasets
+
+
+kubectl get pods
+
+kubectl create -f deployments/hello.yaml
+kubectl create -f services/hello.yaml
+
+
+kubectl create secret generic tls-certs --from-file tls/
+kubectl create configmap nginx-frontend-conf --from-file=nginx/frontend.conf
+kubectl create -f deployments/frontend.yaml
+kubectl create -f services/frontend.yaml
+
+
+
+Task 3. Rolling update
+
+Deployments support updating images to a new version through a rolling update mechanism. When a deployment is updated with a new version, it creates a new ReplicaSet and slowly increases the number of replicas in the new ReplicaSet as it decreases the replicas in the old ReplicaSet.
+
+
+Trigger a rolling update
+To update your deployment, run the following command:
+kubectl edit deployment hello
+
+Change the image in the containers section of the deployment to the following:
+...
+containers:
+  image: kelseyhightower/hello:2.0.0
+...
+
+kubectl get replicaset
+
+You can also see a new entry in the rollout history:
+kubectl rollout history deployment/hello
+
+Pause rolling update:
+kubectl rollout pause deployment/hello
+
+
+Verify the current state of the rollout:
+kubectl rollout status deployment/hello
+
+kubectl get pods -o jsonpath --template='{range .items[*]}{.metadata.name}{"\t"}{"\t"}{.spec.containers[0].image}{"\n"}{end}'
+
+kubectl rollout undo deployment/hello
+kubectl rollout history deployment/hello
+
+kubectl get pods -o jsonpath --template='{range .items[*]}{.metadata.name}{"\t"}{"\t"}{.spec.containers[0].image}{"\n"}{end}'
+
+
+.....
+Task 4. Canary deployments
+When you want to test a new deployment in production with a subset of your users, use a canary deployment. Canary deployments allow you to release a change to a small subset of your users to mitigate risk associated with new releases.
+
+........
+gcloud config set compute/zone "us-east4-a"
+export ZONE=$(gcloud config get compute/zone)
+
+gcloud config set compute/region "us-east4"
+export REGION=$(gcloud config get compute/region)
+
+
+
+
+
+

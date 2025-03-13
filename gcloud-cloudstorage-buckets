@@ -1,0 +1,35 @@
+gcloud storage buckets create gs://[BUCKET_NAME]
+
+gcloud storage buckets create gs://gcloud-bucket1056
+
+upload file using gcloud shell, later
+
+upload same file to bucket
+gcloud storage cp [MY_FILE] gs://[BUCKET_NAME]
+
+gcloud storage cp first.drawio gs://gcloud-bucket1056
+
+To create a persistent state in Cloud Shell, which file would you configure?
+Ans: .profile
+
+INFRACLASS_REGION=us-west4
+echo $INFRACLASS_REGION
+us-west4
+mkdir infraclass
+touch infraclass/config
+
+echo INFRACLASS_REGION=$INFRACLASS_REGION >> ~/infraclass/config
+  INFRACLASS_PROJECT_ID=qwiklabs-gcp-03-b85e02d100dc
+echo INFRACLASS_PROJECT_ID=$INFRACLASS_PROJECT_ID >> ~/infraclass/config
+source infraclass/config
+echo $INFRACLASS_PROJECT_ID
+qwiklabs-gcp-03-b85e02d100dc
+ls -la
+vim .profile
+
+add to end of line below:
+source infraclass/config
+:wq
+
+echo $INFRACLASS_PROJECT_ID
+qwiklabs-gcp-03-b85e02d100dc

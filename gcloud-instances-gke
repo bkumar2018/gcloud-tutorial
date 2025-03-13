@@ -1,4 +1,11 @@
+There are four ways you can interact with Google Cloud: 
+There’s the 
+Cloud Console, 
+Cloud Shell and the 
+Cloud SDK, the APIs, and the 
+Cloud Mobile App. 
 
+........
 gcloud auth list
 sudo apt-get update
 sudo apt-get install -y nginx
