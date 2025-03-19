@@ -1,0 +1,35 @@
+
+
+
+11.0.0.0/24  = 256 IP address
+11.0.0.0/16  = 65,536 IP address
+11.0.0.0/8  = 16,777,216 IP address
+
+
+11.0.1.125 = 32 bit address
+
+
+11 .     0 .    1 .     125 
+8bit    8bit    8bit    8bit   == 32bit
+
+
+11.0.1.0/28
+
+32-28 = 4   
+    2 raise to power 4 = 16 address
+
+below are 16 ip address:
+11.0.1.0, 11.0.1.1, 11.0.1.2, .... 
+...11.0.1.15
+
+
+........................
+VPC
+11.0.0.0/16  = 65,536 IPs
+
+Pub Subnet              Priv Subnet
+11.0.1.0/24  256 IPs            11.0.2.0/24  256 IPs
+
+
+
+

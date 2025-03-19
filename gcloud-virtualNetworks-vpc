@@ -1,0 +1,23 @@
+Default VPC
+
+- Every project
+- one subnet per region
+- default firewall rules
+
+
+mynet-notus-vm:
+
+10.140.0.2 - internal
+34.81.119.211 -external
+
+ping -c 3 <Enter mynet-notus-vm's internal IP here>
+ping -c 3 10.140.0.2
+
+ping -c 3 <Enter mynet-notus-vm's external IP here>
+ping -c 3 34.81.119.211
+
+
+
+create firewal:
+gcloud compute firewall-rules create privatenet-allow-icmp-ssh-rdp --direction=INGRESS --priority=1000 --network=privatenet --action=ALLOW --rules=icmp,tcp:22,tcp:3389 --source-ranges=0.0.0.0/0
+

@@ -1,0 +1,311 @@
+
+
+Task 1. Create the VM instance
+Create a VPC network with some firewall rules and a VM instance that has no external IP address, and connect to the instance using an IAP tunnel.
+
+Create a VPC network and firewall rules
+First, create a VPC network for the VM instance and a firewall rule to allow SSH access.
+
+In the Google Cloud console, in the Navigation menu (Navigation menu icon), click VPC network > VPC networks.
+
+Click Create VPC Network.
+
+For Name, type privatenet.
+
+For Subnet creation mode, click Custom.
+
+In New Subnet specify the following, and leave the remaining settings as their defaults:
+
+Property	Value (type value or select option as specified)
+Name	privatenet-us
+Region	us-west1
+IPv4 address range	10.130.0.0/20
+Note: Don't enable Private Google access yet!
+Click Done.
+
+Click Create and wait for the network to be created.
+
+In the left pane, click Firewall.
+
+Click Create Firewall Rule.
+
+Specify the following, and leave the remaining settings as their defaults:
+
+Property	Value (type value or select option as specified)
+Name	privatenet-allow-ssh
+Network	privatenet
+Targets	All instances in the network
+Source filter	IPv4 ranges
+Source IPv4 ranges	35.235.240.0/20
+Protocols and ports	Specified protocols and ports
+For tcp, click the checkbox and specify port 22.
+
+Click Create.
+
+Note: In order to connect to your private instance using SSH, you need to open an appropriate port on the firewall. IAP connections come from a specific set of IP addresses (35.235.240.0/20). Therefore, you can limit the rule to this CIDR range.
+Create the VM instance with no public IP address
+In the Google Cloud console, in the Navigation menu (Navigation menu icon), click Compute Engine > VM instances.
+
+Click Create Instance.
+
+On the Machine configuration page, specify the following, and leave the remaining settings as their defaults:
+
+Property	Value (type value or select option as specified)
+Name	vm-internal
+Region	us-west1
+Zone	us-west1-a
+Series	E2
+Machine type	e2-medium (2vCPU, 1 core, 4 GB memory)
+Click OS and storage.
+
+If the Image shown is not Debian GNU/Linux 12 (bookworm), click Change and select Debian GNU/Linux 12 (bookworm), and then click Select.
+
+Click Networking.
+
+In Network interfaces, edit the network interface by specifying the following:
+
+Property	Value (type value or select option as specified)
+Network	privatenet
+Subnetwork	privatenet-us
+External IPv4 address	None
+Note: The default setting for a VM instance is to have an ephemeral external IP address. This behavior can be changed with a policy constraint at the organization or project level. To learn more about controlling external IP addresses on VM instances, refer to the external IP address documentation.
+Click Done.
+Click Create, and wait for the VM instance to be created.
+On the VM instances page, verify that the External IP of vm-internal is None.
+
+
+
+SSH to vm-internal to test the IAP tunnel
+In the Cloud console, click Activate Cloud Shell (Cloud Shell).
+If prompted, click Continue.
+To connect to vm-internal, run the following command:
+gcloud compute ssh vm-internal --zone us-west1-a --tunnel-through-iap
+Copied!
+If prompted click Authorize
+If prompted to continue, type Y.
+When prompted for a passphrase, press ENTER.
+When prompted for the same passphrase, press ENTER.
+
+
+To test the external connectivity of vm-internal, run the following command:
+ping -c 2 www.google.com
+
+This should not work because vm-internal has no external IP address!
+
+Wait for the ping command to complete.
+To return to your Cloud Shell instance, run the following command:
+
+exit
+
+
+
+Task 2. Enable Private Google Access
+VM instances that have no external IP addresses can use Private Google Access to reach external IP addresses of Google APIs and services. By default, Private Google Access is disabled on a VPC network.
+
+Create a Cloud Storage bucket
+Create a Cloud Storage bucket to test access to Google APIs and services.
+
+In the Google Cloud console, in the Navigation menu (Navigation menu icon), click Cloud Storage > Buckets.
+
+Click Create.
+
+Specify the following, and leave the remaining settings as their defaults:
+
+Property	Value (type value or select option as specified)
+Name	Enter a globally unique name
+Location type	Multi-region
+Click Create. If prompted to enable public access prevention, ensure it is checked and cick Confirm. Note the name of your storage bucket.
+
+Store the name of your bucket in an environment variable:
+
+export MY_BUCKET=[enter your bucket name here]
+Copied!
+Verify it with echo:
+echo $MY_BUCKET
+Copied!
+Copy an image file into your bucket
+Copy an image from a public Cloud Storage bucket to your own bucket.
+
+In Cloud Shell, run the following command:
+gcloud storage cp gs://cloud-training/gcpnet/private/access.svg gs://$MY_BUCKET
+Copied!
+In the Cloud console, click your bucket name to verify that the image was copied.
+You can click on the name of the image in the Cloud console to view an example of how Private Google Access is implemented.
+
+Access the image from your VM instance
+
+Currently, which of your VM instances can access the image from your bucket?
+
+vm-internal
+check
+Cloud Shell
+
+In Cloud Shell, to try to copy the image from your bucket, run the following command:
+gcloud storage cp gs://$MY_BUCKET/*.svg .
+Copied!
+This should work because Cloud Shell has an external IP address!
+
+To connect to vm-internal, run the following command:
+gcloud compute ssh vm-internal --zone us-west1-a --tunnel-through-iap
+Copied!
+If prompted, type Y to continue.
+
+Store the name of your bucket in an environment variable:
+
+export MY_BUCKET=[enter your bucket name here]
+Copied!
+Verify it with echo:
+echo $MY_BUCKET
+Copied!
+Try to copy the image to vm-internal, run the following command:
+gcloud storage cp gs://$MY_BUCKET/*.svg .
+Copied!
+This should not work: vm-internal can only send traffic within the VPC network because Private Google Access is disabled (by default).
+
+Press Ctrl+Z to stop the request.
+
+
+
+
+Enable Private Google Access
+Private Google Access is enabled at the subnet level. When it is enabled, instances in the subnet that only have private IP addresses can send traffic to Google APIs and services through the default route (0.0.0.0/0) with a next hop to the default internet gateway.
+
+In the Cloud console, in the Navigation menu (Navigation menu icon), click VPC network > VPC networks.
+Click privatenet to open the network.
+Click Subnets, and then click privatenet-us.
+Click Edit.
+For Private Google access, select On.
+Click Save.
+
+Run the following command, in Cloud Shell for vm-internal, to try to copy the image to vm-internal.
+gcloud storage cp gs://$MY_BUCKET/*.svg .
+Copied!
+
+This should work because vm-internal's subnet has Private Google Access enabled!
+
+To return to your Cloud Shell instance, run the following command:
+exit
+Copied!
+Again type exit if needed to return to your Cloud Shell instance.
+exit
+
+
+
+
+Task 3. Configure a Cloud NAT gateway
+Although vm-internal can now access certain Google APIs and services without an external IP address, the instance cannot access the internet for updates and patches. Configure a Cloud NAT gateway, which allows vm-internal to reach the internet.
+
+Try to update the VM instances
+In Cloud Shell, to try to re-synchronize the package index, run the following:
+sudo apt-get update
+Copied!
+The output should finish like this (example output):
+
+...
+Reading package lists... Done
+This should work because Cloud Shell has an external IP address!
+
+To connect to vm-internal, run the following command:
+gcloud compute ssh vm-internal --zone us-west1-a --tunnel-through-iap
+Copied!
+If prompted, type Y to continue.
+To try to re-synchronize the package index of vm-internal, run the following command:
+sudo apt-get update
+Copied!
+This should only work for Google Cloud packages because vm-internal only has access to Google APIs and services!
+
+Press Ctrl+C to stop the request.
+Configure a Cloud NAT gateway
+Cloud NAT is a regional resource. You can configure it to allow traffic from all ranges of all subnets in a region, from specific subnets in the region only, or from specific primary and secondary CIDR ranges only.
+
+On the Google Cloud console title bar, type Network services in the Search field, then click Network services in the Products & Page section.
+
+On the Network service page, click Pin next to Network services.
+
+Click Cloud NAT.
+
+Click Get started to configure a NAT gateway.
+
+Specify the following:
+
+Property	Value (type value or select option as specified)
+Gateway name	nat-config
+Network	privatenet
+Region	us-west1
+For Cloud Router, select Create new router.
+
+For Name, type nat-router
+
+Click Create.
+
+Note: The NAT mapping section allows you to choose the subnets to map to the NAT gateway. You can also manually assign static IP addresses that should be used when performing NAT. Do not change the NAT mapping configuration in this lab.
+Click Create.
+Wait for the gateway's status to change to Running
+
+
+
+
+Task 4. Configure and view logs with Cloud NAT Logging
+Cloud NAT logging allows you to log NAT connections and errors. When Cloud NAT logging is enabled, one log entry can be generated for each of the following scenarios:
+
+When a network connection using NAT is created.
+When a packet is dropped because no port was available for NAT.
+You can opt to log both kinds of events, or just one or the other. Created logs are sent to Cloud Logging.
+
+Enabling logging
+If logging is enabled, all collected logs are sent to Cloud Logging by default. You can filter these so that only certain logs are sent.
+
+You can also specify these values when you create a NAT gateway or by editing one after it has been created. The following directions show how to enable logging for an existing NAT gateway.
+
+In the Google Cloud console, in the Navigation menu (Navigation menu icon), click Network services > Cloud NAT.
+
+Click on the nat-config gateway and then click Edit.
+
+Click the Advanced configurations dropdown to open that section.
+
+For Logging, select Translation and errors and then click Save.
+
+NAT logging in Cloud Logging
+Now that you have set up Cloud NAT logging for the nat-config gateway, let's find out where we can view our logs.
+
+Click on nat-config to expose its details. Then click on the View in Logs Explorer.
+
+This will open a new tab with Logs Explorer.
+
+You will see that there aren't any logs yet—that's because we just enabled this feature for the gateway.
+
+Note: Keep this tab open and return to your other Google Cloud console tab.
+Generating logs
+As a reminder, Cloud NAT logs are generated for the following sequences:
+
+When a network connection using NAT is created.
+When a packet is dropped because no port was available for NAT.
+Let's connect the host to the internal VM again to see if any logs are generated.
+
+In Cloud Shell for vm-internal, to try to re-synchronize the package index of vm-internal, run the following command:
+gcloud compute ssh vm-internal --zone us-west1-a --tunnel-through-iap
+Copied!
+If prompted, type Y to continue.
+Try to re-synchronize the package index of vm-internal by running the following:
+sudo apt-get update
+Copied!
+The output should look like this (example output):
+
+...
+Reading package lists... Done
+To return to your Cloud Shell instance, run the following command:
+exit
+Copied!
+Let's see if opening up this connection revealed anything new in our logs.
+
+Viewing Logs
+Return to your Logs Explorer tab, and in the navigation menu, click Logs Explorer.
+You should see two new logs that were generated after connecting to the internal VM.
+
+Note: You may need to wait for a few minutes. If you are still unable to see the logs, repeat step 1 to step 4, from the Generating logs section, and then refresh the logging page.
+As we see, the logs give us details on the VPC network we connected to and the connection method we used. Feel free to expand different labels and details.
+
+
+
+
+
