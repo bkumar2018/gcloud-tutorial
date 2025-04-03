@@ -1,0 +1,228 @@
+Task 1. Use BigQuery to import data
+Sign in to BigQuery and create a dataset
+In this task, you create a use BigQuery to create a dataset. You then create a table, before finally importing billing data from Cloud Storage.
+
+In the Google Cloud console, in the Navigation menu ( Navigation menu icon), click BigQuery.
+If prompted, click Done.
+Click on the View actions icon next to your project ID (starts with qwiklabs-gcp) and click Create dataset.
+Note: You can export billing data directly to BigQuery as outlined in the Export Cloud Billing data to BigQuery Guide. However, for the purposes of this lab, a sample billing file has been prepared for you. It is located in a Cloud Storage bucket where it is accessible to your student account. You will import this billing information into a BigQuery table and examine it.
+Specify the following:
+Property Value (type value or select option as specified)
+Dataset ID: billing_dataset
+Data location: US
+Default maximum table age (check Enable table expiration): 1 days (Default maximum table age)
+Click Create Dataset. You should see billing_dataset in the left pane.
+Create a table and import
+Click on the View actions icon next to your billing_dataset dataset, and click Open and then click Create Table to create a new table.
+For Source, specify the following, and leave the remaining settings as their defaults:
+Property Value (type value or select option as specified)
+Create table from: Google Cloud Storage
+Select file from GCS bucket cloud-training/archinfra/BillingExport-2020-09-18.avro
+File format Avro
+For Destination, specify the following, and leave the remaining settings as their defaults:
+Property Value (type value or select option as specified)
+Table name sampleinfotable
+Table type Native table
+Click Create Table. After the job is completed, the table appears below the dataset in the left pane.
+Click Check my progress to verify the objective.
+Assessment Completed
+Use BigQuery to import data
+
+Assessment Completed
+
+Task 2. Examine the table
+In this task, you examine the data which you imported.
+
+Click sampleinfotable.
+Note: This displays the schema that BigQuery automatically created based on the data it found in the imported file. Notice that there are strings, integers, timestamps, and floating values.
+Click Details. As you can see in Number of Rows
+
+What is the total number of rows in the table?
+9,738
+check
+415,602
+9
+9,738,000
+
+Click Preview tab.
+Task 3. Compose a simple query
+In this task, you compose and run a simple query to filter billing data.
+
+When you reference a table in a query, both the dataset ID and table ID must be specified; the project ID is optional.
+
+Note: If the project ID is not specified, BigQuery will default to the current project.
+All the information you need is available in the BigQuery interface. In the column on the left, you see the dataset ID (billing_dataset) and table ID (sampleinfotable).
+
+Recall that clicking on the table name brings up the Schema with all of the field names.
+
+Now construct a simple query based on the Cost field.
+
+Click Compose New Query.
+Paste the following in Query Editor:
+SELECT \* FROM `billing_dataset.sampleinfotable`
+WHERE Cost > 0
+Copied!
+Click Run.
+
+How many rows had cost greater than 0?
+close
+104 rows
+close
+1002 rows
+check
+70765 rows
+close
+44 rows
+
+Click Check my progress to verify the objective.
+Assessment Completed
+Compose a simple query
+
+Assessment Completed
+
+Task 4. Analyze a large billing dataset with SQL
+In this task, you use BigQuery to analyze a sample dataset with 415,602 lines of billing data.
+
+For New Query, paste the following in Query Editor:
+SELECT
+billing_account_id,
+project.id,
+project.name,
+service.description,
+currency,
+currency_conversion_rate,
+cost,
+usage.amount,
+usage.pricing_unit
+FROM
+`billing_dataset.sampleinfotable`
+Copied!
+Click Run. Verify that the resulting table has 415602 lines of billing data.
+
+To find the latest 100 records where there were charges (cost > 0), for New Query, paste the following in Query Editor:
+
+SELECT
+service.description,
+sku.description,
+location.country,
+cost,
+project.id,
+project.name,
+currency,
+currency_conversion_rate,
+usage.amount,
+usage.unit
+FROM
+`billing_dataset.sampleinfotable`
+WHERE
+Cost > 0
+ORDER BY usage_end_time DESC
+LIMIT 100
+Copied!
+Click Run.
+To find all charges that were more than 10 dollars, for Compose New Query, paste the following in Query Editor:
+SELECT
+service.description,
+sku.description,
+location.country,
+cost,
+project.id,
+project.name,
+currency,
+currency_conversion_rate,
+usage.amount,
+usage.unit
+FROM
+`billing_dataset.sampleinfotable`
+WHERE
+cost > 10
+Copied!
+Click Run.
+
+To find the product with the most records in the billing data, for New Query, paste the following in Query Editor:
+
+SELECT
+service.description,
+COUNT(\*) AS billing_records
+FROM
+`billing_dataset.sampleinfotable`
+GROUP BY
+service.description
+ORDER BY billing_records DESC
+Copied!
+Click Run.
+
+Which product had the most billing records?
+Cloud SQL has 10,271 records
+check
+Compute Engine has 281136 records
+BigQuery has 39498 records
+
+To find the most frequently used product costing more than 1 dollar, for New Query, paste the following in Query Editor:
+SELECT
+service.description,
+COUNT(\*) AS billing_records
+FROM
+`billing_dataset.sampleinfotable`
+WHERE
+cost > 1
+GROUP BY
+service.description
+ORDER BY
+billing_records DESC
+Copied!
+Click Run.
+
+Which product had the most billing records of over $1
+check
+Cloud Storage has 17 charges costing more than 62 dollar.
+Kubernetes Engine has 7 charges costing more than 1 dollar.
+Cloud SQL has 15 charges costing more than 1 dollar.
+
+To find the most commonly charged unit of measure, for Compose New Query, paste the following in Query Editor:
+SELECT
+usage.unit,
+COUNT(\*) AS billing_records
+FROM
+`billing_dataset.sampleinfotable`
+WHERE cost > 0
+GROUP BY
+usage.unit
+ORDER BY
+billing_records DESC
+Copied!
+Click Run.
+
+What was the most commonly charged unit of measure?
+Requests were the most commonly charged unit of measure.
+Bytes were the most commonly charged unit of measure.
+check
+Byte-seconds were the most commonly charged unit of measure.
+
+To find the product with the highest aggregate cost, for New Query, paste the following in Query Editor:
+SELECT
+service.description,
+ROUND(SUM(cost),2) AS total_cost
+FROM
+`billing_dataset.sampleinfotable`
+GROUP BY
+service.description
+ORDER BY
+total_cost DESC
+Copied!
+Click Run.
+
+Which product has the highest total cost?
+check
+Compute Engine has an aggregate cost of $2548.77
+Cloud Storage has an aggregate cost of $40.05
+BigQuery has an aggregate cost of $910.73
+
+Click Check my progress to verify the objective.
+Assessment Completed
+Analyze a large billing dataset with SQL
+
+Assessment Completed
+
+Task 5. Review
+In this lab, you imported billing data into BigQuery that had been generated as a avro file. You ran a simple query on the file. Then you accessed a shared dataset containing more than 22,000 records of billing information. You ran a variety of queries on that data to explore how you can use BigQuery to ask and answer questions by running queries.

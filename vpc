@@ -1,0 +1,17 @@
+
+
+
+mynet-us-vm	us-west1-c		
+internal 10.138.0.2 (nic0)	
+
+External 35.203.169.4
+
+
+
+mynet-notus-vm	asia-southeast1-b		
+10.148.0.2 (nic0)	34.142.139.221 (nic0) 
+
+34.142.139.221
+
+
+ping -c 3 34.142.139.221
