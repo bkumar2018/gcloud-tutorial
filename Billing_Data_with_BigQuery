@@ -1,0 +1,78 @@
+
+
+-- SELECT * FROM `billing_dataset.sampleinfotable`
+-- WHERE Cost > 0
+
+-- SELECT
+--   billing_account_id,
+--   project.id,
+--   project.name,
+--   service.description,
+--   currency,
+--   currency_conversion_rate,
+--   cost,
+--   usage.amount,
+--   usage.pricing_unit
+-- FROM
+--   `billing_dataset.sampleinfotable`
+
+
+-- SELECT
+--   service.description,
+--   sku.description,
+--   location.country,
+--   cost,
+--   project.id,
+--   project.name,
+--   currency,
+--   currency_conversion_rate,
+--   usage.amount,
+--   usage.unit
+-- FROM
+--   `billing_dataset.sampleinfotable`
+-- WHERE
+--   Cost > 0
+-- ORDER BY usage_end_time DESC
+-- LIMIT 100
+
+-- SELECT
+--   service.description,
+--   COUNT(*) AS billing_records
+-- FROM
+--   `billing_dataset.sampleinfotable`
+-- GROUP BY
+--   service.description
+-- ORDER BY billing_records DESC
+
+-- SELECT
+--   service.description,
+--   COUNT(*) AS billing_records
+-- FROM
+--   `billing_dataset.sampleinfotable`
+-- WHERE
+--   cost > 1
+-- GROUP BY
+--   service.description
+-- ORDER BY
+--   billing_records DESC
+
+-- SELECT
+--   usage.unit,
+--   COUNT(*) AS billing_records
+-- FROM
+--   `billing_dataset.sampleinfotable`
+-- WHERE cost > 0
+-- GROUP BY
+--   usage.unit
+-- ORDER BY
+--   billing_records DESC
+
+SELECT
+  service.description,
+  ROUND(SUM(cost),2) AS total_cost
+FROM
+  `billing_dataset.sampleinfotable`
+GROUP BY
+  service.description
+ORDER BY
+  total_cost DESC
