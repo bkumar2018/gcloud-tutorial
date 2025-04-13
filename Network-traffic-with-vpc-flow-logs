@@ -1,0 +1,343 @@
+Overview
+In this lab, you will configure a network to record traffic to and from an Apache web server using VPC Flow Logs. You will then export the logs to BigQuery to analyze them.
+
+Objectives
+In this lab, you will learn how to perform the following tasks:
+
+Configure a custom network with VPC flow logs.
+Create an Apache web server.
+Verify that network traffic is logged.
+Export the network traffic to BigQuery to further analyze the logs.
+Setup VPC flow log aggregation.
+Setup and requirements
+For each lab, you get a new Google Cloud project and set of resources for a fixed time at no cost.
+
+Click the Start Lab button. If you need to pay for the lab, a pop-up opens for you to select your payment method. On the left is the Lab Details panel with the following:
+
+The Open Google Cloud console button
+Time remaining
+The temporary credentials that you must use for this lab
+Other information, if needed, to step through this lab
+Click Open Google Cloud console (or right-click and select Open Link in Incognito Window if you are running the Chrome browser).
+
+The lab spins up resources, and then opens another tab that shows the Sign in page.
+
+Tip: Arrange the tabs in separate windows, side-by-side.
+
+Note: If you see the Choose an account dialog, click Use Another Account.
+If necessary, copy the Username below and paste it into the Sign in dialog.
+
+student-04-b43adf487256@qwiklabs.net
+Copied!
+You can also find the Username in the Lab Details panel.
+
+Click Next.
+
+Copy the Password below and paste it into the Welcome dialog.
+
+BHTaRfGEIIK7
+Copied!
+You can also find the Password in the Lab Details panel.
+
+Click Next.
+
+Important: You must use the credentials the lab provides you. Do not use your Google Cloud account credentials.
+Note: Using your own Google Cloud account for this lab may incur extra charges.
+Click through the subsequent pages:
+
+Accept the terms and conditions.
+Do not add recovery options or two-factor authentication (because this is a temporary account).
+Do not sign up for free trials.
+After a few moments, the Google Cloud console opens in this tab.
+
+Note: To view a menu with a list of Google Cloud products and services, click the Navigation menu at the top-left, or type the service or product name in the Search field. Navigation menu icon
+Task 1. Configure a custom network with VPC flow logs
+Create the custom network
+By default, VPC Flow Logs are disabled for a network. Therefore, you will create a new custom-mode network and enable VPC flow logs.
+
+In the Google Cloud console, in the Navigation menu (Navigation menu icon), select VPC network > VPC networks.
+
+Click Create VPC Network.
+
+Specify the following and leave the remaining settings as their defaults:
+
+Property Value (type value or select option as specified)
+Name vpc-net
+Description Enter an optional description
+For Subnet creation mode, click Custom.
+
+Specify the following and leave the remaining settings as their defaults:
+
+Property Value (type value or select option as specified)
+Name vpc-subnet
+Region us-east1
+IP address range 10.1.3.0/24
+Flow Logs On
+Note: Turning on VPC flow logs doesn't affect performance, but some systems generate a large number of logs, which can increase costs. If you click on Configure logs you'll notice that you can modify the aggregation interval and sample rate. This allows you to trade off longer interval updates for lower data volume generation which lowers logging costs. For more information on this, refer to the log sampling and processing documentation.
+Click Done.
+Click Create.
+Wait for the network to be created before continuing.
+
+Create the firewall rule
+In order to serve HTTP and SSH traffic on the network, you need to create a firewall rule.
+
+In the Navigation menu (Navigation menu icon), select VPC network > Firewall.
+
+Click CREATE FIREWALL RULE.
+
+Specify the following and leave the remaining settings as their defaults:
+
+Property Value (type value or select option as specified)
+Name allow-http-ssh
+Network vpc-net
+Targets Specified target tags
+Target tags http-server
+Source filter IPv4 Ranges
+Source IPv4 ranges 0.0.0.0/0
+Protocols and ports Specified protocols and ports, and then check tcp, type: 80, 22
+Note: Make sure to include the /0 in the Source IPv4 ranges to specify all networks.
+Click Create.
+Click Check my progress to verify the objective.
+Assessment Completed!
+Configure a custom network with VPC Flow Logs
+
+Assessment Completed!
+
+Task 2. Create an Apache web server
+Create the web server
+In the Navigation menu, select Compute Engine > VM instances.
+
+Click Create instance.
+
+Specify the following and leave the remaining settings as their defaults:
+
+Property Value (type value or select option as specified)
+Name web-server
+Region us-east1
+Zone us-east1-d
+Series E2
+Machine type e2-micro
+Click Networking.
+
+For Network tags, type http-server.
+
+For Network interfaces, click default.
+
+Specify the following and leave the remaining settings as their defaults:
+
+Property Value (type value or select option as specified)
+Network vpc-net
+Subnetwork vpc-subnet (10.1.3.0/24)
+Click Done.
+
+Click Create.
+
+Install Apache
+Configure the VM instance that you created as an Apache web server and overwrite the default web page.
+
+For web-server, click SSH to launch a terminal and connect.
+
+In the web-server SSH terminal, update the package index:
+
+sudo apt-get update
+Copied!
+Install the apache2 package:
+
+sudo apt-get install apache2 -y
+Copied!
+To create a new default web page by overwriting the default, run the following:
+
+echo '<!doctype html><html><body><h1>Hello World!</h1></body></html>' | sudo tee /var/www/html/index.html
+Copied!
+Exit the SSH terminal:
+
+exit
+Copied!
+Click Check my progress to verify the objective.
+Create an Apache web server
+
+Task 3. Verify that network traffic is logged
+Generate network traffic
+Return to the VM instances page in the Cloud console.
+For web-server, click on the External IP to access the server.
+Note: You should see the Hello World! welcome page that you configured. Alternatively, you can access the server in a new tab by navigating to http://Enter the external IP Address.
+Find your IP address
+Find the IP address of the computer you are using. One easy way to do this is to go to a website that provides this address.
+
+Open a browser in a new tab.
+Go to Google.com and search for what's my IP. It will either directly reply with your IP or give you a list of sites that perform this service.
+Ensure that the IP address only contains numerals (IPv4) and is not represented in hexadecimal (IPv6).
+Copy your IP address. It will be referred to as YOUR_IP_ADDRESS.
+Access the VPC flow logs
+On the Google Cloud console title bar, in the Search field, type Logging, click Search, and then click Logging.
+In the Log fields panel, under RESOURCE TYPE, click Subnetwork. In the Query results pane, entries from the subnetwork logs appear.
+In the Log fields panel, under LOG NAME, click compute.googleapis.com/vpc_flows. In the Query results panel, entries from the VPC flow logs appear. If you do not see compute.googleapis.com/vpc_flows, wait a few minutes for this log type to show up.
+Enable the Show query button.
+In the Query builder box, at the end of line 2, press Enter to create a new line.
+On line 3, enter YOUR_IP_ADDRESS and click Run Query.
+Note: If you do not see the vpc_flows filter option or any logs after running the query, you might have to wait a few minutes and refresh. If the vpc_flows filter option or logs still do not appear, click on the External IP of the web-server a few times to generate more traffic. Then, check the vpc_flows filter option again and rerun the query.
+Expand one of the log entries.
+Within the entry, expand the jsonPayload and then expand the connection.
+
+Which fields does the connection contain?
+
+Source IP address
+
+Source port
+
+Destination IP address
+
+Destination port
+
+The IANA protocol number
+
+You can explore other fields within the log entry before continuing to the next task.
+
+Task 4. Export the network traffic to BigQuery to further analyze the logs
+Create an export sink
+On the Google Cloud console title bar, type Logs explorer in the Search field, then select Logs explorer from Search Results.
+Under the RESOURCE TYPE, click Subnetwork. In the Query results pane, entries for all available subnetworks appear.
+Under the LOG NAME filter, click compute.googleapis.com/vpc_flows. In the Query results pane, only the VPC flow log entries are shown.
+Select Actions > Create Sink.
+For the Sink name, type bq_vpcflows, and click NEXT.
+In the Select sink service drop-down list, select BigQuery dataset.
+In the Select BigQuery dataset drop-down list, select Create new BigQuery dataset.
+For Dataset ID, enter bq_vpcflows, and click CREATE DATASET.
+Click NEXT twice.
+Click CREATE SINK.
+Generate log traffic for BigQuery
+Now that the network traffic logs are being exported to BigQuery, you need to generate more traffic by accessing the web-server several times. Using Cloud Shell, you can curl the IP address of the web-server several times.
+
+In the Navigation menu, select Compute Engine > VM instances.
+Note the External IP address for the web-server instance. It will be referred to as EXTERNAL_IP.
+Click Activate Cloud Shell (Activate Cloud Shell icon).
+If prompted, click Continue.
+Store the EXTERNAL_IP in an environment variable in Cloud Shell:
+export MY_SERVER=<Enter the EXTERNAL_IP here>
+Copied!
+Access the web-server 50 times from Cloud Shell:
+for ((i=1;i<=50;i++)); do curl $MY_SERVER; done
+Copied!
+Visualize the VPC flow logs in BigQuery
+In the Cloud console, in the Navigation menu, click BigQuery.
+If prompted, click Done.
+In the left pane, expand the bq_vpcflows dataset to reveal the table. You might have to first expand the Project ID to reveal the dataset.
+Click on the name of the table. It should start with compute_googleapis.
+Click on the Details tab.
+Copy the Table ID value under Table info.
+Note: If you do not see the bq_vpcflows dataset or if it does not expand, wait and refresh the page.
+Click the + icon to open a new BidQuery Editor tab.
+
+Add the following to the BigQuery Editor and replace your_table_id with TABLE_ID while retaining the accents (`) on both sides:
+
+#standardSQL
+SELECT
+jsonPayload.src_vpc.vpc_name,
+SUM(CAST(jsonPayload.bytes_sent AS INT64)) AS bytes,
+jsonPayload.src_vpc.subnetwork_name,
+jsonPayload.connection.src_ip,
+jsonPayload.connection.src_port,
+jsonPayload.connection.dest_ip,
+jsonPayload.connection.dest_port,
+jsonPayload.connection.protocol
+FROM
+`your_table_id`
+GROUP BY
+jsonPayload.src_vpc.vpc_name,
+jsonPayload.src_vpc.subnetwork_name,
+jsonPayload.connection.src_ip,
+jsonPayload.connection.src_port,
+jsonPayload.connection.dest_ip,
+jsonPayload.connection.dest_port,
+jsonPayload.connection.protocol
+ORDER BY
+bytes DESC
+LIMIT
+15
+Copied!
+Click Run.
+Note: If you get an error, ensure that you did not remove the #standardSQL part of the query. If it still fails, ensure that the TABLE_ID did not include the Project ID.
+
+Which columns does the results table contain?
+
+Protocol
+
+VPC name
+
+Destination IP address and port
+
+Source IP address and port
+
+Subnet name
+
+Sum of bytes sent
+
+Analyze the VPC flow logs in BigQuery
+The previous query gave you the same information that you saw in the Cloud console. Now, you will change the query to identify the top IP addresses that have exchanged traffic with your web-server.
+
+Create a new query in the BigQuery Editor with the following and replace your_table_id with TABLE_ID while retaining the accents (`) on both sides:
+#standardSQL
+SELECT
+jsonPayload.connection.src_ip,
+jsonPayload.connection.dest_ip,
+SUM(CAST(jsonPayload.bytes_sent AS INT64)) AS bytes,
+jsonPayload.connection.dest_port,
+jsonPayload.connection.protocol
+FROM
+`your_table_id`
+WHERE jsonPayload.reporter = 'DEST'
+GROUP BY
+jsonPayload.connection.src_ip,
+jsonPayload.connection.dest_ip,
+jsonPayload.connection.dest_port,
+jsonPayload.connection.protocol
+ORDER BY
+bytes DESC
+LIMIT
+15
+Copied!
+Click Run.
+Note: The results table now has a row for each source IP and is sorted by the highest amount of bytes sent to the web-server. The top result should reflect your Cloud Shell IP address.
+Note: Unless you accessed the web-server after creating the export sink, you will not see your machine's IP address in the table.
+You can generate more traffic to the web-server from multiple sources and query the table again to determine the bytes sent to the server.
+
+Click Check my progress to verify the objective.
+Assessment Completed!
+Export the network traffic to BigQuery to further analyze the logs
+
+Assessment Completed!
+
+Task 5. Add VPC flow log aggregation
+In this task, you will now explore a new release of VPC flow log volume reduction. Not every packet is captured into its own log record. However, even with sampling, log record captures can be quite large.
+
+You can balance your traffic visibility and storage cost needs by adjusting specific aspects of logs collection, which you will explore in this section.
+
+Setting up aggregation
+In the Console, navigate to the Navigation menu (Navigation menu icon) and select VPC network > VPC networks.
+
+Click vpc-net.
+
+In the Subnets tab, click vpc-subnet:
+
+VPC subnets in Subnets tab
+
+Click Edit > Advanced Settings to expose the following fields:
+Flow log settings additional fields
+
+The purpose of each field is explained below.
+
+Aggregation time interval: Sampled packets for a time interval are aggregated into a single log entry. This time interval can be 5 sec (default), 30 sec, 1 min, 5 min, 10 min, or 15 min.
+
+Metadata annotations: By default, flow log entries are annotated with metadata information, such as the names of the source and destination VMs or the geographic region of external sources and destinations. This metadata annotation can be turned off to save storage space.
+
+Log entry sampling: Before being written to the database, the number of logs can be sampled to reduce their number. By default, the log entry volume is scaled by 0.50 (50%), which means that half of entries are kept. You can set this from 1.0 (100%, all log entries are kept) to 0.0 (0%, no logs are kept).
+
+Set the Aggregation Interval to 30 seconds.
+
+Set the Secondary sampling rate to 25%.
+
+Click Save. You should see the following message:
+
+Estimated logs generated per day notification
+
+Setting the aggregation level to 30 seconds can reduce your flow logs size by up to 83% compared to the default aggregation interval of 5 seconds. Configuring your flow log aggregation can seriously affect your traffic visibility and storage costs.

@@ -1,0 +1,358 @@
+
+# Task below:
+
+# Create a Cloud Run function
+# Deploy and test the Cloud Run function
+# View logs
+
+
+# Activate cloud shell
+
+gcloud auth list
+
+gcloud config list project
+
+create a function:
+gcloud config set run/region us-east4
+
+
+#Deploy the function:
+
+gcloud functions deploy nodejs-pubsub-function \
+    --gen2 \
+    --runtime=nodejs20 \
+    --region=us-east4 \
+    --source=. \
+    --entry-point=helloPubSub \
+    --trigger-topic cf-demo \
+    --stage-bucket qwiklabs-gcp-04-9f8005984ebc-bucket \
+    --service-account cloudfunctionsa@qwiklabs-gcp-04-9f8005984ebc.iam.gserviceaccount.com \
+    --allow-unauthenticated
+
+
+
+
+
+
+#verify the status of the function:
+gcloud functions describe nodejs-pubsub-function \
+    --region=us-east4 
+
+
+# Test the function
+gcloud pubsub topics publish cf-demo --message="Cloud Function Gen2"
+
+#View the logs
+gcloud functions logs read nodejs-pubsub-function \
+    --region=us-east4 
+
+
+
+
+#Overview
+A Cloud Run function is a piece of code that runs in response to an event, such as an HTTP request, a message from a messaging service, or a file upload. Cloud events are things that happen in your cloud environment. These might be things like changes to data in a database, files added to a storage system, or a new virtual machine instance being created.
+
+Since Cloud Run functions are event-driven, they only run when something happens. This makes them a good choice for tasks that need to be done quickly or that don't need to be running all the time.
+
+For example, you can use a Cloud Run function to:
+
+automatically generate thumbnails for images that are uploaded to Cloud Storage.
+send a notification to a user's phone when a new message is received in Pub/Sub.
+process data from a Cloud Firestore database and generate a report.
+You can write your code in any language that supports Node.js, and you can deploy your code to the cloud with a few clicks. Once your Cloud Run function is deployed, it will automatically start running in response to events.
+
+This hands-on lab shows you how to create, deploy, and test a Cloud Run function using the Google Cloud console.
+
+This hands-on lab shows you how to create, deploy, and test a Cloud Run function using the Google Cloud Shell command line.
+
+
+
+# Pub/Sub : Console
+Pub/Sub is a messaging service for exchanging event data among applications and services. A producer of data publishes messages to a Pub/Sub topic. A consumer creates a subscription to that topic. Subscribers either pull messages from a subscription or are configured as webhooks for push subscriptions. Every subscriber must acknowledge each message within a configurable window of time.
+
+
+# Task:
+
+# Set up a topic to hold data.
+# Subscribe to a topic to access the data.
+# Publish and then consume messages with a pull subscriber.
+
+
+Task 1. Setting up Pub/Sub
+To use Pub/Sub, you create a topic to hold data and a subscription to access data published to the topic.
+
+From the Navigation menu (Navigation menu icon) click View All Products. Go to Analytics section, click Pub/Sub > Topics.
+Click Create topic.
+The topic must have a unique name. For this lab, name your topic MyTopic. In the Create a topic dialog:
+For Topic ID, type MyTopic.
+Leave other fields at their default value.
+Click Create.
+
+
+Task 2. Add a subscription
+Now you'll make a subscription to access the topic.
+
+Click Topics in the left panel to return to the Topics page. For the topic you just made click the three dot icon > Create subscription.
+
+In the Add subscription to topic dialog:
+Type a name for the subscription, such as MySub
+Set the Delivery Type to Pull.
+Leave all other options at the default values.
+
+Click Create.
+Your subscription is listed in the Subscription list.
+
+
+
+Task 4. Publish a message to the topic
+Navigate back to pub/sub > Topics and open MyTopics page.
+
+In the Topics details page, click Messages tab and then click Publish Message.
+
+Enter Hello World in the Message field and click Publish.
+
+
+Task 5. View the message
+To view the message, use the subscription (MySub) to pull the message (Hello World) from the topic (MyTopic).
+
+Enter the following command in Cloud Shell:
+gcloud pubsub subscriptions pull --auto-ack MySub
+
+
+# Pub/Sub Command Line:
+---------------------
+
+Pub/Sub basics
+As stated earlier, Pub/Sub is an asynchronous global messaging service. There are three terms in Pub/Sub that appear often: topics, publishing, and subscribing.
+
+A topic is a shared string that allows applications to connect with one another through a common thread.
+
+Publishers push (or publish) a message to a Cloud Pub/Sub topic.
+
+Subscribers make a "subscription" to a topic where they will either pull messages from the subscription or configure webhooks for push subscriptions. Every subscriber must acknowledge each message within a configurable window of time.
+
+To sum it up, a producer publishes messages to a topic and a consumer creates a subscription to a topic to receive messages from it.
+
+
+
+Task 1. Pub/Sub topics
+Pub/Sub comes preinstalled in Cloud Shell, so there are no installations or configurations required to get started with this service.
+
+Run the following command to create a topic called myTopic:
+gcloud pubsub topics create myTopic
+
+
+For good measure, create two more topics; one called Test1 and the other called Test2:
+gcloud pubsub topics create Test1
+Copied!
+gcloud pubsub topics create Test2
+
+To see the three topics you just created, run the following command:
+gcloud pubsub topics list
+
+Time to clean up. Delete Test1 and Test2 by running the following commands:
+gcloud pubsub topics delete Test1
+Copied!
+gcloud pubsub topics delete Test2
+
+Run the gcloud pubsub topics list command one more time to verify the topics were deleted:
+gcloud pubsub topics list
+
+
+Task 2. Pub/Sub subscriptions
+Now that you're comfortable creating, viewing, and deleting topics, time to work with subscriptions.
+
+Run the following command to create a subscription called mySubscription to topic myTopic:
+gcloud  pubsub subscriptions create --topic myTopic mySubscription
+
+
+Add another two subscriptions to myTopic. Run the following commands to make Test1 and Test2 subscriptions:
+gcloud  pubsub subscriptions create --topic myTopic Test1
+Copied!
+gcloud  pubsub subscriptions create --topic myTopic Test2
+
+Run the following command to list the subscriptions to myTopic:
+gcloud pubsub topics list-subscriptions myTopic
+
+
+Now delete the Test1 and Test2 subscriptions. Run the following commands:
+gcloud pubsub subscriptions delete Test1
+Copied!
+gcloud pubsub subscriptions delete Test2
+See if the Test1 and Test2 subscriptions were deleted. Run the list-subscriptions command one more time:
+gcloud pubsub topics list-subscriptions myTopic
+
+
+
+Task 3. Pub/Sub publishing and pulling a single message
+Next you'll learn how to publish a message to a Pub/Sub topic.
+
+Run the following command to publish the message "hello" to the topic you created previously (myTopic):
+gcloud pubsub topics publish myTopic --message "Hello"
+Copied!
+Publish a few more messages to myTopic. Run the following commands (replacing <YOUR NAME> with your name and <FOOD> with a food you like to eat):
+gcloud pubsub topics publish myTopic --message "Publisher's name is <YOUR NAME>"
+Copied!
+gcloud pubsub topics publish myTopic --message "Publisher likes to eat <FOOD>"
+Copied!
+gcloud pubsub topics publish myTopic --message "Publisher thinks Pub/Sub is awesome"
+Copied!
+Next, use the pull command to get the messages from your topic. The pull command is subscription based, meaning it should work because earlier you set up the subscription mySubscription to the topic myTopic.
+
+Use the following command to pull the messages you just published from the Pub/Sub topic:
+gcloud pubsub subscriptions pull mySubscription --auto-ack
+
+
+
+Task 4. Pub/Sub pulling all messages from subscriptions
+Since you pulled all of the messages from your topic in the last example, populate myTopic with a few more messages.
+
+Run the following commands:
+gcloud pubsub topics publish myTopic --message "Publisher is starting to get the hang of Pub/Sub"
+Copied!
+gcloud pubsub topics publish myTopic --message "Publisher wonders if all messages will be pulled"
+Copied!
+gcloud pubsub topics publish myTopic --message "Publisher will have to test to find out"
+Copied!
+Add a flag to your command so you can output all three messages in one request.
+You may have not noticed, but you have actually been using a flag this entire time: the --auto-ack part of the pull command is a flag that has been formatting your messages into the neat boxes that you see your pulled messages in.
+
+limit is another flag that sets an upper limit on the number of messages to pull.
+
+Wait a minute to let the topics get created. Run the pull command with the limit flag:
+gcloud pubsub subscriptions pull mySubscription --limit=3
+
+
+
+# Pub/Sub : Python
+
+Task 1. Create a virtual environment
+Python virtual environments are used to isolate package installation from the system.
+
+Install the virtualenv environment:
+sudo apt-get install -y virtualenv
+Copied!
+Build the virtual environment:
+python3 -m venv venv
+Copied!
+Activate the virtual environment:
+source venv/bin/activate
+Copied!
+Task 2. Install the client library
+Run the following to install the client library:
+pip install --upgrade google-cloud-pubsub
+Copied!
+Get the sample code by cloning a GitHub repository:
+git clone https://github.com/googleapis/python-pubsub.git
+Copied!
+Navigate to the directory:
+cd python-pubsub/samples/snippets
+
+
+Task 3. Pub/Sub - the Basics
+Pub/Sub is an asynchronous global messaging service. There are three terms in Pub/Sub that appear often: topics, publishing, and subscribing.
+
+A topic is a shared string that allows applications to connect with one another through a common thread.
+
+Publishers push (or publish) a message to a Pub/Sub topic. Subscribers will then make a subscription to that thread, where they will either pull messages from the topic or configure webhooks for push subscriptions. Every subscriber must acknowledge each message within a configurable window of time.
+
+In sum, a publisher creates and sends messages to a topic and a subscriber creates a subscription to a topic to receive messages from it.
+
+Pub/Sub in Google CLoud
+Pub/Sub comes preinstalled in Cloud Shell, so there are no installations or configurations required to get started with this service. In this lab you use Python to create the topic, subscriber, and then view the message. You use a gcloud command to publish the message to the topic.
+
+
+
+Task 4. Create a topic
+To publish data to Pub/Sub you create a topic and then configure a publisher to the topic.
+
+In Cloud Shell, your Project ID should automatically be stored in the environment variable GOOGLE_CLOUD_PROJECT:
+echo $GOOGLE_CLOUD_PROJECT
+Copied!
+Ensure the output is the same as the Project ID in your CONNECTION DETAILS.
+publisher.py is a script that demonstrates how to perform basic operations on topics with the Cloud Pub/Sub API. View the content of publisher script:
+
+cat publisher.py
+Copied!
+Note: Alternatively, you can use the shell editors that are installed on Cloud Shell, such as nano or vim or use the Cloud Shell code editor to view python-pubsub/samples/snippets/publisher.py.
+For information about the publisher script:
+python publisher.py -h
+
+
+
+
+Run the publisher script to create Pub/Sub Topic:
+python publisher.py $GOOGLE_CLOUD_PROJECT create MyTopic
+
+
+This command returns a list of all Pub/Sub topics in a given project:
+python publisher.py $GOOGLE_CLOUD_PROJECT list
+
+
+You can also view the topic you just made in the Cloud Console.
+
+Navigate to Navigation menu > Pub/Sub > Topics.
+You should see MyTopic.
+
+Task 5. Create a subscription
+Create a Pub/Sub subscription for topic with subscriber.py script:
+python subscriber.py $GOOGLE_CLOUD_PROJECT create MyTopic MySub
+
+This command returns a list of subscribers in given project:
+python subscriber.py $GOOGLE_CLOUD_PROJECT list-in-project
+
+Check out the subscription you just made in the console. In the left pane, click Subscriptions. You should see the subscription name and other details.
+
+For information about the subscriber script:
+
+python subscriber.py -h
+
+
+
+
+Task 6. Publish messages
+Now that you've set up MyTopic (the topic) and a subscription to MyTopic (MySub), use gcloud commands to publish a message to MyTopic.
+
+Publish the message "Hello" to MyTopic:
+gcloud pubsub topics publish MyTopic --message "Hello"
+Copied!
+Publish a few more messages to MyTopic—run the following commands (replacing <YOUR NAME> with your name and <FOOD> with a food you like to eat):
+gcloud pubsub topics publish MyTopic --message "Publisher's name is <YOUR NAME>"
+Copied!
+gcloud pubsub topics publish MyTopic --message "Publisher likes to eat <FOOD>"
+Copied!
+gcloud pubsub topics publish MyTopic --message "Publisher thinks Pub/Sub is awesome"
+Copied!
+
+
+
+Task 7. View messages
+Now that you've published messages to MyTopic, pull and view the messages using MySub.
+
+Use MySub to pull the message from MyTopic:
+python subscriber.py $GOOGLE_CLOUD_PROJECT receive MySub
+
+
+
+/////////////
+
+
+
+cerate bucket:
+
+qwiklabs-gcp-02-97cd1ea3f0a4-bucket
+
+
+gcloud pubsub topics create topic-memories-427
+
+
+gcloud functions deploy memories-thumbnail-generator \
+    --gen2 \
+    --runtime=nodejs22 \
+    --region=us-west1 \
+    --entry-point=topic-memories-427 \
+    --trigger-topic cf-demo \
+    --stage-bucket qwiklabs-gcp-02-97cd1ea3f0a4-bucket \
+    --service-account cloudfunctionsa@qwiklabs-gcp-04-9f8005984ebc.iam.gserviceaccount.com \
+    --allow-unauthenticated
+

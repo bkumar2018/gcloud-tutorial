@@ -1,0 +1,196 @@
+
+
+#activate account name with this command
+gcloud auth list
+
+#list the project ID  
+gcloud config list project
+
+#Deploy basic GKE cluster
+1. gcloud beta container clusters create gmp-cluster --num-nodes=1 --zone us-east1-d --enable-managed-prometheus
+
+
+o/p:
+
+student_04_17cdd8df557b@cloudshell:~ (qwiklabs-gcp-02-1a5db6c03ab6)$ gcloud beta container clusters create gmp-cluster --num-nodes=1 --zone us-east1-d --enable-managed-prometheus
+Note: The Kubelet readonly port (10255) is now deprecated. Please update your workloads to use the recommended alternatives. See https://cloud.google.com/kubernetes-engine/docs/how-to/disable-kubelet-readonly-port for ways to check usage and for migration instructions.
+Note: Your Pod address range (`--cluster-ipv4-cidr`) can accommodate at most 1008 node(s).
+Creating cluster gmp-cluster in us-east1-d... Cluster is being health-checked (Kubernetes Control Plane is healthy)...working...                                                                                         Creating cluster gmp-cluster in us-east1-d... Cluster is being health-checked (Kubernetes Control Plane is healthy)...done.
+Created [https://container.googleapis.com/v1beta1/projects/qwiklabs-gcp-02-1a5db6c03ab6/zones/us-east1-d/clusters/gmp-cluster].
+To inspect the contents of your cluster, go to: https://console.cloud.google.com/kubernetes/workload_/gcloud/us-east1-d/gmp-cluster?project=qwiklabs-gcp-02-1a5db6c03ab6
+kubeconfig entry generated for gmp-cluster.
+NAME: gmp-cluster
+LOCATION: us-east1-d
+MASTER_VERSION: 1.31.6-gke.1020000
+MASTER_IP: 34.75.199.212
+MACHINE_TYPE: e2-medium
+NODE_VERSION: 1.31.6-gke.1020000
+NUM_NODES: 1
+STATUS: RUNNING
+
+
+2. gcloud container clusters get-credentials gmp-cluster --zone=us-east1-d
+
+
+#create namespace
+#Create the gmp-test Kubernetes namespace for resources you create as part of the example application:
+
+kubectl create ns gmp-test
+
+
+3. Deploy an example application :
+
+kubectl -n gmp-test apply -f https://raw.githubusercontent.com/GoogleCloudPlatform/prometheus-engine/v0.2.3/examples/example-app.yaml
+
+
+#Podmonitoring resource, prom-example, in gmp-test namespace, 
+kubectl -n gmp-test apply -f https://raw.githubusercontent.com/GoogleCloudPlatform/prometheus-engine/v0.2.3/examples/pod-monitoring.yaml
+
+
+
+4. #Dwonload prometheus binary from bitbucket:
+
+    git clone https://github.com/GoogleCloudPlatform/prometheus && cd prometheus
+    
+    git checkout v2.28.1-gmp.4
+
+    wget https://storage.googleapis.com/kochasoft/gsp1026/prometheus
+
+    chmod a+x prometheus
+
+5. Run the Prometheus binary 
+
+export PROJECT_ID=$(gcloud config get-value project)
+export ZONE=us-east1-d
+
+./prometheus \
+  --config.file=documentation/examples/prometheus.yml --export.label.project-id=$PROJECT_ID --export.label.location=$ZONE 
+
+
+/////////////
+
+
+# gcloud beta container clusters create hello-world-5d9s --num-nodes=3 --min-nodes=2 --max-nodes=6 --zone us-central1-c 
+
+
+# <!-- gcloud container clusters create "hello-world" \
+#   --num-nodes=3 \
+#   --min-nodes=2 \
+#   --max-nodes=6 \
+#   --zone us-central1-a -->
+
+
+gcloud container clusters create hello-world-uu58 \
+  --zone us-east1-c \
+  --release-channel regular \
+  --cluster-version latest \
+  --num-nodes 3 \
+  --enable-autoscaling \
+  --min-nodes 2 \
+  --max-nodes 6 
+
+
+
+gcloud container clusters update hello-world-uu58 \
+  --enable-managed-prometheus \
+  --zone us-east1-c
+
+# gcloud container clusters upgrade hello-world-5d9s \
+#   --zone us-central1-c \
+#   --cluster-version "1.28.0-gke.1000"
+
+
+
+kubectl create ns gmp-0nha
+
+
+gsutil cp gs://spls/gsp510/prometheus-app.yaml .
+
+containers.image: nilebox/prometheus-example-app:latest
+containers.name: prometheus-test
+ports.name: metrics
+
+
+kubectl -n gmp-0nha apply -f prometheus-app.yaml
+
+gsutil cp gs://spls/gsp510/pod-monitoring.yaml .
+
+kubectl -n gmp-0nha apply -f pod-monitoring.yaml
+
+
+
+gsutil cp -r gs://spls/gsp510/hello-app/ .
+
+
+
+Create a logs-based metric
+-----------
+Logging
+  Logs Explorer
+
+  add below query:
+
+resource.type="k8s_container"
+severity=ERROR
+labels."k8s-pod/app": "recommendationservice"
+
+
+resource.type="k8s_pod"
+severity="WARNING"
+
+
+click on Run Query
+
+
+To create the logs-based metric, 
+click on Actions dropdown and 
+select Create Metric.
+
+Name the metric Error_Rate_SLI, and 
+click Create Metric to save the log based metric:
+
+
+Create an alerting policy
+---------
+1. In the Navigation menu, 
+open Monitoring, then 
+click Alerting.
+
+create a policy
+
+Click on Select a metric dropdown
+Uncheck the Active.
+
+
+
+
+us-east1-docker.pkg.dev/qwiklabs-gcp-04-37a102f4820b/hello-repo/hello-app:v2
+
+
+
+gcloud artifacts docker images list us-east1-docker.pkg.dev/qwiklabs-gcp-04-37a102f4820b/hello-repo
+Listing items under project qwiklabs-gcp-04-37a102f4820b, location us-east1, repository hello-repo.
+
+IMAGE: us-east1-docker.pkg.dev/qwiklabs-gcp-04-37a102f4820b/hello-repo/hello-app
+DIGEST: sha256:217b4c24f9de7c204e4eb20751dc43e65caf4543cbc9cd1d69912675f5f935c1
+CREATE_TIME: 2025-04-10T19:52:32
+UPDATE_TIME: 2025-04-10T19:52:32
+SIZE: 12581383
+
+
+
+
+//////
+Authenticate Docker:
+gcloud auth configure-docker
+
+Tag the Docker Image (hello-app:v2):
+docker tag hello-app:v2 us-central1-docker.pkg.dev/my-project-id/hello-repo/hello-app:v2
+
+Push the Docker Image to Artifact Registry:
+docker push us-central1-docker.pkg.dev/my-project-id/hello-repo/hello-app:v2
+
+Verify the Image:
+gcloud artifacts docker images list us-central1-docker.pkg.dev/my-project-id/hello-repo
+
+/////
