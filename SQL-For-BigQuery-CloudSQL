@@ -1,0 +1,517 @@
+Overview
+SQL (Structured Query Language) is a standard language for data operations that allows you to ask questions and get insights from structured datasets. It's commonly used in database management and allows you to perform tasks like transaction record writing into relational databases and petabyte-scale data analysis.
+
+This lab is divided into two parts: in the first half, you will learn fundamental SQL querying keywords, which you will run in BigQuery on a public dataset that contains information on London bikeshares.
+
+In the second half, you will learn how to export subsets of the London bikeshare dataset into CSV files, which you will then upload to Cloud SQL. From there you will learn how to use Cloud SQL to create and manage databases and tables. Towards the end, you will get hands-on practice with additional SQL keywords that manipulate and edit data.
+
+In this lab, you will learn how to:
+
+Read data into BigQuery.
+Execute simple queries in BigQuery to explore data.
+Export a subset of data into a CSV file and store that file in a new Cloud Storage bucket.
+Create a new Cloud SQL instance and load your exported CSV file as a new table.
+
+SELECT USER FROM example_table
+SELECT USER, SHIPPED FROM example_table
+SELECT USER FROM example_table WHERE SHIPPED='YES'
+
+BigQuery is a fully-managed petabyte-scale data warehouse that runs on the Google Cloud. Data analysts and data scientists can quickly query and filter large datasets, aggregate results, and perform complex operations without having to worry about setting up and managing servers. It comes in the form of a command line tool (pre installed in cloudshell) or a web console—both ready for managing and querying data housed in Google Cloud projects.
+
+Open the BigQuery console
+In the Google Cloud Console, select Navigation menu > BigQuery.
+The Welcome to BigQuery in the Cloud Console message box opens. This message box provides a link to the quickstart guide and the release notes.
+
+Click Done.
+The BigQuery console opens.
+
+Uploading queryable data
+In this section you pull in some public data into your project so you can practice running SQL commands in BigQuery.
+
+Click on + ADD.
+
+Choose Star a project by name.
+
+Enter project name as bigquery-public-data.
+
+Click STAR.
+
+SELECT \* FROM `bigquery-public-data.london_bicycles.cycle_hire` WHERE duration>=1200;
+
+Task 3. More SQL Keywords: GROUP BY, COUNT, AS, and ORDER BY
+GROUP BY
+The GROUP BY keyword will aggregate result-set rows that share common criteria (e.g. a column value) and will return all of the unique entries found for such criteria.
+
+This is a useful keyword for figuring out categorical information on tables.
+
+To get a better picture of what this keyword does, clear the query from the editor, then copy and paste the following command:
+
+SELECT start_station_name FROM `bigquery-public-data.london_bicycles.cycle_hire` GROUP BY start_station_name;
+
+Click Run
+
+COUNT
+The COUNT() function will return the number of rows that share the same criteria (e.g. column value). This can be very useful in tandem with a GROUP BY.
+
+Add the COUNT function to our previous query to figure out how many rides begin at each starting point.
+
+Clear the query from the editor, then copy and paste the following command and then click Run:
+
+SELECT start_station_name, COUNT(\*) FROM `bigquery-public-data.london_bicycles.cycle_hire` GROUP BY start_station_name;
+
+Click Run
+
+AS
+SQL also has an AS keyword, which creates an alias of a table or column. An alias is a new name that's given to the returned column or table—whatever AS specifies.
+
+Add an AS keyword to the last query you ran to see this in action. Clear the query from the editor, then copy and paste the following command:
+
+SELECT start_station_name, COUNT(\*) AS num_starts FROM `bigquery-public-data.london_bicycles.cycle_hire` GROUP BY start_station_name;
+
+Click Run
+
+ORDER BY
+The ORDER BY keyword sorts the returned data from a query in ascending or descending order based on a specified criteria or column value. Add this keyword to our previous query to do the following:
+
+Return a table that contains the number of bikeshare rides that begin at each starting station, organized alphabetically by the starting station.
+Return a table that contains the number of bikeshare rides that begin at each starting station, organized numerically from lowest to highest.
+Return a table that contains the number of bikeshare rides that begin at each starting station, organized numerically from highest to lowest.
+
+SELECT start_station_name, COUNT(\*) AS num FROM `bigquery-public-data.london_bicycles.cycle_hire` GROUP BY start_station_name ORDER BY start_station_name;
+
+SELECT start_station_name, COUNT(\*) AS num FROM `bigquery-public-data.london_bicycles.cycle_hire` GROUP BY start_station_name ORDER BY num;
+
+SELECT start_station_name, COUNT(\*) AS num FROM `bigquery-public-data.london_bicycles.cycle_hire` GROUP BY start_station_name ORDER BY num DESC;
+
+Task 4. Working with Cloud SQL
+Exporting queries as CSV files
+Cloud SQL is a fully-managed database service that makes it easy to set up, maintain, manage, and administer your relational PostgreSQL and MySQL databases in the cloud. There are two formats of data accepted by Cloud SQL: dump files (.sql) or CSV files (.csv). You will learn how to export subsets of the cycle_hire table into CSV files and upload them to Cloud Storage as an intermediate location.
+
+Back in the BigQuery Console, this should have been the last command that you ran:
+
+SELECT end_station_name, COUNT(\*) AS num FROM `bigquery-public-data.london_bicycles.cycle_hire` GROUP BY end_station_name ORDER BY num DESC;
+
+In the Query Results section click SAVE RESULTS > CSV(local file). This initiates a download, which saves this query as a CSV file. Note the location and the name of this downloaded file—you will need it soon.
+
+Upload CSV files to Cloud Storage
+Go to the Cloud Console where you'll create a storage bucket where you can upload the files you just created.
+
+Select Navigation menu > Cloud Storage > Buckets, and then click CREATE BUCKET.
+
+Note: If prompted, click LEAVE for Unsaved work.
+Enter a unique name for your bucket, keep all other settings as default, and click Create.
+
+If prompted, click Confirm for Public access will be prevented dialog.
+
+You should now be in the Cloud Console looking at your newly created Cloud Storage Bucket.
+
+Click UPLOAD > Upload files and select the CSV that contains start_station_name data.
+
+Then click Open. Repeat this for the end_station_name data.
+
+Task 5. Create a Cloud SQL instance
+In the console, select Navigation menu > SQL.
+
+Click CREATE INSTANCE > Choose MySQL .
+
+Enter instance id as my-demo.
+
+Enter a secure password in the Password field (remember it!).
+
+Select the database version as MySQL 8.
+
+For Choose a Cloud SQL edition, select Enterprise.
+
+For Edition preset, select Development (4 vCPU, 16 GB RAM, 100 GB Storage, Single zone).
+
+Warning: if you choose a preset larger than Development, your project will be flagged and your lab will be terminated.
+Set the Region field as us-central1.
+
+Set the Multi zones (Highly available) > Primary Zone field as us-central1-c.
+
+Click CREATE INSTANCE.
+
+Note: It might take a few minutes for the instance to be created. Once it is, you will see a green checkmark next to the instance name on the SQL instances page.
+Click on the Cloud SQL instance. The SQL Overview page opens.
+
+Task 6. New queries in Cloud SQL
+CREATE keyword (databases and tables)
+Now that you have a Cloud SQL instance up and running, create a database inside of it using the Cloud Shell Command Line.
+
+Open Cloud Shell by clicking on the icon in the top right corner of the console.
+
+Run the following command to set your project ID as an environment variable:
+
+export PROJECT_ID=$(gcloud config get-value project)
+gcloud config set project $PROJECT_ID
+
+# Create a database in Cloud Shell
+
+Run the following command in Cloud Shell to setup auth without opening up a browser.
+gcloud auth login --no-launch-browser
+gcloud sql connect griffin-dev-db --user=root --quiet
+
+If prompted [Y/n], press Y and then ENTER.
+
+This will give you a link to open in your browser. Open the link in the same browser where you are logged in to the qwiklabs account. Once you login you will get a verification code to copy. Paste that code in the cloud shell.
+
+Run the following command to connect to your SQL instance, replacing my-demo if you used a different name for your instance:
+
+# gcloud sql connect my-demo --user=root --quiet
+
+gcloud sql connect griffin-dev-db --user=root --quiet
+
+Note: It may take a minute to connect to your instance. If you get an message that "Operation failed because another operation was already in progress", you need to wait for the SQL instance to finish being created, and then try to connect again.
+When prompted, enter the root password you set for the instance. Note: The cursor will not move.
+
+mysql> CREATE DATABASE bike;
+Query OK, 1 row affected (0.22 sec)
+
+mysql> USE bike;
+
+Database changed
+mysql> CREATE TABLE london1 (start_station_name VARCHAR(255), num INT);
+Query OK, 0 rows affected (0.26 sec)
+
+mysql> USE bike;
+
+Database changed
+mysql> CREATE TABLE london2 (end_station_name VARCHAR(255), num INT);
+Query OK, 0 rows affected (0.24 sec)
+
+mysql> SELECT \* FROM london1;
+
+Empty set (0.21 sec)
+
+mysql> SELECT \* FROM london2;
+Empty set (0.21 sec)
+
+Upload CSV files to tables
+Return to the Cloud SQL console. You will now upload the start_station_name and end_station_name CSV files into your newly created london1 and london2 tables.
+
+In your Cloud SQL instance page, click IMPORT.
+In the Cloud Storage file field, click Browse, and then click the arrow next to your bucket name, and then click start_station_data.csv. Click Select.
+Select CSV as File format.
+Select the bike database and type in london1 as your table.
+Click Import.
+Do the same for the other CSV file.
+
+In your Cloud SQL instance page, click IMPORT.
+In the Cloud Storage file field, click Browse, and then click the arrow next to your bucket name, and then click end_station_data.csv Click Select.
+Select CSV as File format.
+Select the bike database and type in london2 as your table.
+Click Import.
+You should now have both CSV files uploaded to tables in the bike database.
+
+Return to your Cloud Shell session and run the following command at the MySQL server prompt to inspect the contents of london1:
+SELECT \* FROM london1;
+Copied!
+You should receive 955 lines of output, one for each unique station name.
+
+Run the following command to make sure that london2 has been populated:
+SELECT \* FROM london2;
+Copied!
+You should receive 959 lines of output, one more each unique station name.
+
+SELECT _ FROM london1;
+SELECT _ FROM london2;
+
+DELETE keyword
+Here are a couple more SQL keywords that help us with data management. The first is the DELETE keyword.
+
+Run the following commands in your MySQL session to delete the first row of the london1 and london2:
+DELETE FROM london1 WHERE num=0;
+DELETE FROM london2 WHERE num=0;
+Copied!
+You should receive the following output after running both commands:
+
+DELETE FROM london1 WHERE num=0;
+DELETE FROM london2 WHERE num=0;
+
+INSERT INTO london1 (start_station_name, num) VALUES ("test destination", 1);
+
+UNION keyword
+The last SQL keyword that you'll learn about is UNION. This keyword combines the output of two or more SELECT queries into a result-set. You use UNION to combine subsets of the "london1" and "london2" tables.
+
+The following chained query pulls specific data from both tables and combines them with the UNION operator.
+
+Run the following command at the MySQL server prompt:
+SELECT start_station_name AS top_stations, num FROM london1 WHERE num>100000
+UNION
+SELECT end_station_name, num FROM london2 WHERE num>100000
+ORDER BY top_stations DESC;
+Copied!
+The first SELECT query selects the two columns from the "london1" table and creates an alias for "start_station_name", which gets set to "top_stations". It uses the WHERE keyword to only pull rideshare station names where over 100,000 bikes start their journey.
+
+The second SELECT query selects the two columns from the "london2" table and uses the WHERE keyword to only pull rideshare station names where over 100,000 bikes end their journey.
+
+The UNION keyword in between combines the output of these queries by assimilating the "london2" data with "london1". Since "london1" is being unioned with "london2", the column values that take precedence are "top_stations" and "num".
+
+ORDER BY will order the final, unioned table by the "top_stations" column value alphabetically and in descending order.
+'
+
+Challenge scenario
+As a cloud engineer at Jooli Inc. and recently trained with Google Cloud and Kubernetes, you have been asked to help a new team (Griffin) set up their environment. The team has asked for your help and has done some work, but needs you to complete the work.
+
+You are expected to have the skills and knowledge for these tasks so don’t expect step-by-step guides.
+
+You need to complete the following tasks:
+
+Create a development VPC with three subnets manually
+Create a production VPC with three subnets manually
+Create a bastion that is connected to both VPCs
+Create a development Cloud SQL Instance and connect and prepare the WordPress environment
+Create a Kubernetes cluster in the development VPC for WordPress
+Prepare the Kubernetes cluster for the WordPress environment
+Create a WordPress deployment using the supplied configuration
+Enable monitoring of the cluster
+Provide access for an additional engineer
+Some Jooli Inc. standards you should follow:
+
+Create all resources in the REGION region and ZONE zone, unless otherwise directed.
+Use the project VPCs.
+Naming is normally team-resource, e.g. an instance could be named kraken-webserver1.
+Allocate cost effective resource sizes. Projects are monitored and excessive resource use will result in the containing project's termination (and possibly yours), so beware. This is the guidance the monitoring team is willing to share: unless directed, use e2-medium.
+Your challenge
+You need to help the team with some of their initial work on a new project. They plan to use WordPress and need you to set up a development environment. Some of the work was already done for you, but other parts require your expert skills.
+
+As soon as you sit down at your desk and open your new laptop you receive the following request to complete these tasks. Good luck
+
+/////
+Lab
+
+Create a VPC called griffin-dev-vpc with the following subnets only:
+
+griffin-dev-wp
+IP address block: 192.168.16.0/20
+
+griffin-dev-mgmt
+IP address block: 192.168.32.0/20
+
+# use Region and zone
+
+us-east1 region and us-east1-d zone
+
+# create VPC :
+
+gcloud compute networks create griffin-dev-vpc \
+ --subnet-mode=custom
+
+# create subnet:
+
+gcloud compute networks subnets create griffin-dev-wp \
+ --network=griffin-dev-vpc \
+ --region=us-east1 \
+ --range=192.168.16.0/20
+
+gcloud compute networks subnets create griffin-dev-mgmt \
+ --network=griffin-dev-vpc \
+ --region=us-east1 \
+ --range=192.168.32.0/20
+
+# create VPC :
+
+gcloud compute networks create griffin-prod-vpc \
+ --subnet-mode=custom
+
+# create subnet:
+
+gcloud compute networks subnets create griffin-prod-wp \
+ --network=griffin-prod-vpc \
+ --region=us-east1 \
+ --range=192.168.48.0/20
+
+gcloud compute networks subnets create griffin-prod-mgmt \
+ --network=griffin-prod-vpc \
+ --region=us-east1 \
+ --range=192.168.64.0/20
+
+# Create firewall rule:
+
+gcloud compute firewall-rules create allow-ssh-dev \
+ --network=griffin-dev-mgmt \
+ --allow=tcp:22 \
+ --source-ranges=0.0.0.0/0 \
+ --target-tags=bastion
+
+Create Bastion host with 2 NICs
+
+gcloud compute instances create bastion-host \
+ --zone=us-east1-d \
+ --machine-type=e2-medium \
+ --subnet=griffin-dev-mgmt \
+ --network-interface subnet=griffin-prod-mgmt \
+ --image-family=debian-11 \
+ --image-project=debian-cloud \
+ --tags=bastion \
+ --metadata=enable-oslogin=true
+
+Error above, so used console ui to create bastion host.
+
+firewall also created manually for both vpc seprately
+
+# Task 4. Create and configure Cloud SQL Instance
+
+Create a MySQL Cloud SQL Instance called griffin-dev-db in us-east1.
+Connect to the instance and run the following SQL commands to prepare the WordPress environment:
+
+CREATE DATABASE wordpress;
+CREATE USER "wp_user"@"%" IDENTIFIED BY "stormwind_rules";
+GRANT ALL PRIVILEGES ON wordpress.\* TO "wp_user"@"%";
+FLUSH PRIVILEGES;
+
+# Create a database in Cloud Shell
+
+Run the following command in Cloud Shell to setup auth without opening up a browser.
+gcloud auth login --no-launch-browser
+gcloud sql connect griffin-dev-db --user=root --quiet
+
+# Task 5. Create Kubernetes cluster
+
+Create a 2 node cluster (e2-standard-4) called griffin-dev, in the griffin-dev-wp subnet, and in zone us-east1-d.
+
+gcloud container clusters create griffin-dev \
+ --zone us-east1-c \
+ --num-nodes 2 \
+ --machine-type e2-standard-4 \
+ --network griffin-dev-vpc \
+ --subnetwork griffin-dev-wp \
+ --enable-ip-alias
+
+gsutil -m cp -r gs://cloud-training/gsp321/wp-k8s .
+
+Task 6. Prepare the Kubernetes cluster
+From Cloud Shell copy all files from gs://cloud-training/gsp321/wp-k8s.
+The WordPress server needs to access the MySQL database using the username and password you created in task 4.
+
+You do this by setting the values as secrets. WordPress also needs to store its working files outside the container, so you need to create a volume.
+
+Add the following secrets and volume to the cluster using wp-env.yaml.
+
+Make sure you configure the username to wp_user and password to stormwind_rules before creating the configuration.
+
+////////////////
+
+student_01_59a92310bacf@cloudshell:~/wp-k8s (qwiklabs-gcp-01-ff7f2bb415f7)$ cat wp-env.yaml
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+name: wordpress-volumeclaim
+spec:
+accessModes: - ReadWriteOnce
+resources:
+requests:
+storage: 200Gi
+
+---
+
+apiVersion: v1
+kind: Secret
+metadata:
+name: database
+type: Opaque
+stringData:
+username: wp_user
+password: stormwind_rules
+
+////////////////
+You also need to provide a key for a service account that was already set up. This service account provides access to the database for a sidecar container.
+
+Use the command below to create the key, and then add the key to the Kubernetes environment:
+
+kubectl apply -f wp-env.yaml
+
+kubectl get secret
+kubectl get pvc
+
+student_01_59a92310bacf@cloudshell:~/wp-k8s (qwiklabs-gcp-01-ff7f2bb415f7)$ kubectl get secret
+NAME TYPE DATA AGE
+cloudsql-instance-credentials Opaque 1 20s
+database Opaque 2 32s
+
+student_01_59a92310bacf@cloudshell:~/wp-k8s (qwiklabs-gcp-01-ff7f2bb415f7)$ kubectl get pvc
+NAME STATUS VOLUME CAPACITY ACCESS MODES STORAGECLASS VOLUMEATTRIBUTESCLASS AGE
+wordpress-volumeclaim Pending standard-rwo <unset> 38s
+student_01_59a92310bacf@cloudshell:~/wp-k8s (qwiklabs-gcp-01-ff7f2bb415f7)$
+
+
+
+You also need to provide a key for a service account that was already set up. This service account provides access to the database for a sidecar container.
+
+Use the command below to create the key, and then add the key to the Kubernetes environment:
+gcloud iam service-accounts keys create key.json \
+    --iam-account=cloud-sql-proxy@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com
+kubectl create secret generic cloudsql-instance-credentials \
+    --from-file key.json
+
+
+
+MySQL Connection URL
+qwiklabs-gcp-01-7ab1530c7406:us-east1:griffin-dev-db
+
+gcloud container clusters get-credentials griffin-dev \
+ --zone us-east1-d
+
+gcloud monitoring uptime-checks create http wordpress-uptime \
+ --host=104.196.147.124 \
+ --path=/ \
+ --port=80 \
+ --check-interval=60s \
+ --timeout=10s \
+ --http-method=GET \
+ --region=us-east1
+
+gcloud projects add-iam-policy-binding <PROJECT_ID> \
+ --member="user:<SECOND_USER_EMAIL>" \
+ --role="roles/editor"
+
+gcloud projects add-iam-policy-binding griffin-dev-123456 \
+ --member="user:second-user@example.com" \
+ --role="roles/editor"
+
+gcloud projects get-iam-policy <PROJECT_ID>
+
+new connection mysql db url :
+
+qwiklabs-gcp-01-ff7f2bb415f7:us-east1:griffin-dev-db
+
+
+student_01_59a92310bacf@cloudshell:~/wp-k8s (qwiklabs-gcp-01-ff7f2bb415f7)$ kubectl apply -f wp-deployment.yaml 
+deployment.apps/wordpress created
+student_01_59a92310bacf@cloudshell:~/wp-k8s (qwiklabs-gcp-01-ff7f2bb415f7)$ 
+student_01_59a92310bacf@cloudshell:~/wp-k8s (qwiklabs-gcp-01-ff7f2bb415f7)$ kubectl get pods
+NAME                         READY   STATUS              RESTARTS   AGE
+wordpress-865b48d956-4slmm   0/2     ContainerCreating   0          10s
+student_01_59a92310bacf@cloudshell:~/wp-k8s (qwiklabs-gcp-01-ff7f2bb415f7)$ 
+
+student_01_59a92310bacf@cloudshell:~/wp-k8s (qwiklabs-gcp-01-ff7f2bb415f7)$ kubectl apply -f wp-service.yaml 
+service/wordpress created
+student_01_59a92310bacf@cloudshell:~/wp-k8s (qwiklabs-gcp-01-ff7f2bb415f7)$ 
+student_01_59a92310bacf@cloudshell:~/wp-k8s (qwiklabs-gcp-01-ff7f2bb415f7)$ 
+student_01_59a92310bacf@cloudshell:~/wp-k8s (qwiklabs-gcp-01-ff7f2bb415f7)$ kubectl get pods
+NAME                         READY   STATUS    RESTARTS   AGE
+wordpress-865b48d956-4slmm   2/2     Running   0          84s
+student_01_59a92310bacf@cloudshell:~/wp-k8s (qwiklabs-gcp-01-ff7f2bb415f7)$ 
+
+
+student_01_59a92310bacf@cloudshell:~/wp-k8s (qwiklabs-gcp-01-ff7f2bb415f7)$ kubectl get pvc
+NAME                    STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   VOLUMEATTRIBUTESCLASS   AGE
+wordpress-volumeclaim   Bound    pvc-0e042b35-e749-4ec6-a230-22f0e3bbdf9e   200Gi      RWO            standard-rwo   <unset>                 6m2s
+student_01_59a92310bacf@cloudshell:~/wp-k8s (qwiklabs-gcp-01-ff7f2bb415f7)$ 
+stude
+
+
+
+kubectl get svc
+
+
+student_01_59a92310bacf@cloudshell:~/wp-k8s (qwiklabs-gcp-01-ff7f2bb415f7)$ kubectl get svc
+NAME         TYPE           CLUSTER-IP      EXTERNAL-IP     PORT(S)        AGE
+kubernetes   ClusterIP      34.118.224.1    <none>          443/TCP        15m
+wordpress    LoadBalancer   34.118.233.33   35.231.10.228   80:32633/TCP   3m19s
+
+
+
+wordpress-uptimecheck
+
+created manualyy using console ui

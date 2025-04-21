@@ -1,0 +1,83 @@
+
+K8s in google cloud:
+
+Create a repository 
+named valkyrie-repository in Artifact Registry. 
+Use Docker as the format and use the 
+us-east1 region as the location
+
+gcloud artifacts repositories create my-repository --repository-format=docker --location=us-west1 --description="Docker repository"
+
+gcloud artifacts repositories create valkyrie-repository --repository-format=docker --location=us-east1 --description="Docker repository"
+
+Re-tag the container to be able push it to the repository. The format should resemble the following: LOCATION-docker.pkg.dev/PROJECT-ID/REPOSITORY/IMAGE.
+
+docker tag valkyrie-prod:v0.0.3 us-east1-docker.pkg.dev/qwiklabs-gcp-01-cf31b282965f/valkyrie-repository/valkyrie-prod:v0.0.3
+
+authenticate registery:
+
+gcloud auth configure-docker us-east1-docker.pkg.dev
+
+push to Registry
+
+docker push us-east1-docker.pkg.dev/qwiklabs-gcp-01-cf31b282965f/valkyrie-repository/valkyrie-prod:v0.0.3
+
+gcloud container clusters get-credentials <CLUSTER_NAME> --zone us-east1-c --project <PROJECT_ID>
+
+gcloud container clusters get-credentials valkyrie-dev --zone us-east1-c --project qwiklabs-gcp-01-cf31b282965f
+
+
+kubectl apply -f deployment.yaml
+kubectl apply -f service.yaml
+
+kubectl get deployment
+kubectl get svc
+
+
+Run the command to tag node-app:0.2.
+docker build -t us-west1-docker.pkg.dev/qwiklabs-gcp-01-f14b2aeb85a7/my-repository/node-app:0.2 .
+docker images
+docker push us-west1-docker.pkg.dev/qwiklabs-gcp-01-f14b2aeb85a7/my-repository/node-app:0.2
+
+Use valkyrie-app/Dockerfile to create a Docker image called valkyrie-prod with the tag v0.0.3.
+docker build -t valkyrie-prod:v0.0.3
+
+
+
+Pull the image and run it.
+docker run -p 4000:80 -d us-west1-docker.pkg.dev/qwiklabs-gcp-01-f14b2aeb85a7/my-repository/node-app:0.2
+
+docker tag my-image us-west1-docker.pkg.dev/my-project/my-repo/test-image:staging
+
+docker push LOCATION-docker.pkg.dev/PROJECT-ID/REPOSITORY/IMAGE:TAG
+
+gcloud artifacts docker images list \
+    LOCATION-docker.pkg.dev/PROJECT-ID/REPOSITORY/IMAGE [--include-tags]
+
+
+//need to fetch the cluster credentials using the gcloud CLI.
+gcloud container clusters get-credentials <CLUSTER_NAME> --zone <ZONE> --project <PROJECT_ID>
+e.g:
+gcloud container clusters get-credentials dev-cluster --zone us-central1-a --project my-gcp-project
+
+
+
+
+gcloud config set compute/zone us-east1-d
+gcloud container clusters create io --zone us-west1-a
+
+
+Start up a cluster for use in this lab:
+gcloud container clusters create io --zone us-west1-a
+
+kubectl create deployment nginx --image=nginx:1.10.0
+
+kubectl create -f services/monolith.yaml
+kubectl create -f deployments/auth.yaml
+
+kubectl create -f deployments/hello.yaml
+kubectl create -f services/hello.yaml
+
+
+kubectl expose deployment nginx --port 80 --type LoadBalancer
+

@@ -1,0 +1,630 @@
+### Configure Networks via gcloud
+
+Task 1. Create network
+You can choose to create an auto mode or custom mode VPC network. Each new network that you create must have a unique name within the same project. You can create up to four additional networks in a project.
+
+In Cloud Shell, use the following gcloud command to create a custom mode network called labnet:
+
+## gcloud compute networks create labnet --subnet-mode=custom
+
+With this command you're doing the following:
+
+gcloud invokes the Cloud SDK gcloud command line tool
+compute is a one of the groups available in gcloud, part of a nested hierarchy of command groups
+networks is a subgroup of compute with it's own specialized commands
+create is the action to be executed on this group
+labnet is the name of the network you're creating
+--subnet-mode=custom you're passing the subnet mode flag and the type of subnet you're creating, "custom".
+Click Check my progress to verify the objective.
+
+Task 2. Create a subnetwork
+When you create a subnetwork, its name must be unique in that project for that region, even across networks. The same name can appear twice in a project as long as each one is in a different region.
+
+Each subnet must have a primary range, which must be unique within the same region in a project.
+
+Now create sub-network labnet-sub:
+
+# gcloud compute networks subnets create labnet-sub \
+
+--network labnet \
+ --region "us-east4" \
+ --range 10.0.0.0/28
+
+Task 3. Viewing networks
+List the networks in your project:
+
+# gcloud compute networks list
+
+Use describe to view network details, such as its peering connections and subnets. Replace NETWORK_NAME with the name of your network:
+
+# gcloud compute networks describe NETWORK_NAME
+
+gcloud compute networks describe labnet
+
+Task 4. List subnets
+You can list all subnets in all networks in your project, or you can show only the subnets for a particular network or region.
+
+Use this command to list all subnets in all VPC networks, in all regions:
+
+# gcloud compute networks subnets list
+
+Task 5. Creating firewall rules
+Auto networks include default rules, custom networks do not include any firewall rules. Firewall rules are defined at the network level, and only apply to the network where they are created.
+
+The name you choose for each firewall rule must be unique to the project. To allow access to VM instances, you must apply firewall rules.
+
+## Create the labnet-allow-internal firewall rule:
+
+gcloud compute firewall-rules create labnet-allow-internal \
+ --network=labnet \
+ --action=ALLOW \
+ --rules=icmp,tcp:22 \
+ --source-ranges=0.0.0.0/0
+
+With this command you are doing the following:
+
+firewall-rules is a subcategory of compute
+create is the action you are taking
+labnet-allow-internal is the name of the firewall rule
+--network=labnet puts the rule in the labnet network
+--action=ALLOW must be used with the --rules flag, and is either "ALLOW" or "DENY"
+--rules=icmp,tcp:22 specifies the icmp and tcp protocols and the ports that the rule applies to
+--source-ranges=0.0.0.0/0 specifies the ranges of source IP addresses in CIDR format.
+
+Task 6. Viewing firewall rules details
+Inspect the firewall rules to see its name, applicable network, and components, including whether the rule is enabled or disabled:
+
+# gcloud compute firewall-rules describe [FIREWALL_RULE_NAME]
+
+gcloud compute firewall-rules describe labnet-allow-internal
+
+Task 7. Create another network
+Now you'll create a another network, add firewall rules to it, then add VMs to both networks to test the ability to communicate with the networks.
+
+Run the following command to create the privatenet network:
+gcloud compute networks create privatenet --subnet-mode=custom
+Copied!
+Create the private-sub subnet:
+
+gcloud compute networks subnets create private-sub \
+ --network=privatenet \
+ --region="us-east4" \
+ --range 10.1.0.0/28
+
+Create the firewall rules for privatenet
+Run the following command to create the privatenet-deny firewall rule:
+gcloud compute firewall-rules create privatenet-deny \
+ --network=privatenet \
+ --action=DENY \
+ --rules=icmp,tcp:22 \
+ --source-ranges=0.0.0.0/0
+
+gcloud compute firewall-rules describe [FIREWALL_RULE_NAME]
+
+## Task 8. Create VM instances
+
+Create two VM instances in the subnets:
+
+pnet-vm in private-sub
+lnet-vm in labnet-sub
+
+Create the pnet-vm instance
+
+Run the following command to create the pnet-vm instance in the private-sub subnet:
+
+gcloud compute instances create pnet-vm \
+--zone="us-east4-a" \
+--machine-type=n1-standard-1 \
+--subnet=private-sub
+
+Create Inet-vm instance:
+
+gcloud compute instances create lnet-vm \
+--zone="us-east4-a" \
+--machine-type=n1-standard-1 \
+--subnet=labnet-sub
+
+Now list all the VM instances (sorted by zone):
+gcloud compute instances list --sort-by=ZONE
+
+gcloud compute instances list --sort-by=us-east4-a
+
+Task 9. Explore the connectivity
+When you created the networks, you applied firewall rules to each - so one network allows INGRESS traffic, and the other denies INGRESS traffic.
+
+For this experiment, you should be able to communicate with the first network, but be unable to communicate with the second one.
+
+Ping the external IP addresses
+Ping the external IP addresses of the VM instances to determine if you can reach the instances from the public internet.
+ping -c 3 <Enter lnet-vm's external IP here>
+Copied!
+This should work - lnet-vm's network has a firewall rule that allows traffic.
+
+Repeat the command, but use pnet-vm's external IP address.
+This should not work - nothing should be happening. pnet-vm's network has a firewall rule that denies traffic. Use Ctrl+C to end the process.
+
+Command executiong logs:
+
+Welcome to Cloud Shell! Type "help" to get started.
+Your Cloud Platform project in this session is set to qwiklabs-gcp-04-60468e282adf.
+Use `gcloud config set project [PROJECT_ID]` to change to a different project.
+student_04_6cb3724a0a4d@cloudshell:~ (qwiklabs-gcp-04-60468e282adf)$
+student_04_6cb3724a0a4d@cloudshell:~ (qwiklabs-gcp-04-60468e282adf)$
+student_04_6cb3724a0a4d@cloudshell:~ (qwiklabs-gcp-04-60468e282adf)$ gcloud compute networks create labnet --subnet-mode=custom
+Created [https://www.googleapis.com/compute/v1/projects/qwiklabs-gcp-04-60468e282adf/global/networks/labnet].
+student_04_6cb3724a0a4d@cloudshell:~ (qwiklabs-gcp-04-60468e282adf)$
+student_04_6cb3724a0a4d@cloudshell:~ (qwiklabs-gcp-04-60468e282adf)$ gcloud compute networks subnets create labnet-sub \
+ --network labnet \
+ --region "us-east4" \
+ --range 10.0.0.0/28
+Created [https://www.googleapis.com/compute/v1/projects/qwiklabs-gcp-04-60468e282adf/regions/us-east4/subnetworks/labnet-sub].
+NAME: labnet-sub
+REGION: us-east4
+NETWORK: labnet
+RANGE: 10.0.0.0/28
+STACK_TYPE: IPV4_ONLY
+IPV6_ACCESS_TYPE:
+INTERNAL_IPV6_PREFIX:
+EXTERNAL_IPV6_PREFIX:
+student_04_6cb3724a0a4d@cloudshell:~ (qwiklabs-gcp-04-60468e282adf)$
+student_04_6cb3724a0a4d@cloudshell:~ (qwiklabs-gcp-04-60468e282adf)$ gcloud compute networks list
+NAME: default
+SUBNET_MODE: AUTO
+BGP_ROUTING_MODE: REGIONAL
+IPV4_RANGE:
+GATEWAY_IPV4:
+student_04_6cb3724a0a4d@cloudshell:~ (qwiklabs-gcp-04-60468e282adf)$ gcloud compute networks describe labnet
+autoCreateSubnetworks: false
+creationTimestamp: '2025-04-19T04:23:26.042-07:00'
+id: '5677999708143761729'
+kind: compute#network
+name: labnet
+networkFirewallPolicyEnforcementOrder: AFTER_CLASSIC_FIREWALL
+routingConfig:
+bgpBestPathSelectionMode: LEGACY
+routingMode: REGIONAL
+selfLink: https://www.googleapis.com/compute/v1/projects/qwiklabs-gcp-04-60468e282adf/global/networks/labnet
+selfLinkWithId: https://www.googleapis.com/compute/v1/projects/qwiklabs-gcp-04-60468e282adf/global/networks/5677999708143761729
+subnetworks:
+
+- https://www.googleapis.com/compute/v1/projects/qwiklabs-gcp-04-60468e282adf/regions/us-east4/subnetworks/labnet-sub
+  x_gcloud_bgp_routing_mode: REGIONAL
+  x_gcloud_subnet_mode: CUSTOM
+  student_04_6cb3724a0a4d@cloudshell:~ (qwiklabs-gcp-04-60468e282adf)$
+  student_04_6cb3724a0a4d@cloudshell:~ (qwiklabs-gcp-04-60468e282adf)$ gcloud compute networks subnets list
+  NAME: default
+  REGION: us-central1
+  NETWORK: default
+  RANGE: 10.128.0.0/20
+  STACK_TYPE: IPV4_ONLY
+  IPV6_ACCESS_TYPE:
+  INTERNAL_IPV6_PREFIX:
+  EXTERNAL_IPV6_PREFIX:
+
+NAME: default
+REGION: europe-west1
+NETWORK: default
+RANGE: 10.132.0.0/20
+STACK_TYPE: IPV4_ONLY
+IPV6_ACCESS_TYPE:
+INTERNAL_IPV6_PREFIX:
+EXTERNAL_IPV6_PREFIX:
+
+NAME: default
+REGION: us-west1
+NETWORK: default
+RANGE: 10.138.0.0/20
+STACK_TYPE: IPV4_ONLY
+IPV6_ACCESS_TYPE:
+INTERNAL_IPV6_PREFIX:
+EXTERNAL_IPV6_PREFIX:
+
+NAME: default
+REGION: asia-east1
+NETWORK: default
+RANGE: 10.140.0.0/20
+STACK_TYPE: IPV4_ONLY
+IPV6_ACCESS_TYPE:
+INTERNAL_IPV6_PREFIX:
+EXTERNAL_IPV6_PREFIX:
+
+NAME: default
+REGION: us-east1
+NETWORK: default
+RANGE: 10.142.0.0/20
+STACK_TYPE: IPV4_ONLY
+IPV6_ACCESS_TYPE:
+INTERNAL_IPV6_PREFIX:
+EXTERNAL_IPV6_PREFIX:
+
+NAME: default
+REGION: asia-northeast1
+NETWORK: default
+RANGE: 10.146.0.0/20
+STACK_TYPE: IPV4_ONLY
+IPV6_ACCESS_TYPE:
+INTERNAL_IPV6_PREFIX:
+EXTERNAL_IPV6_PREFIX:
+
+NAME: default
+REGION: asia-southeast1
+NETWORK: default
+RANGE: 10.148.0.0/20
+STACK_TYPE: IPV4_ONLY
+IPV6_ACCESS_TYPE:
+INTERNAL_IPV6_PREFIX:
+EXTERNAL_IPV6_PREFIX:
+
+NAME: default
+REGION: us-east4
+NETWORK: default
+RANGE: 10.150.0.0/20
+STACK_TYPE: IPV4_ONLY
+IPV6_ACCESS_TYPE:
+INTERNAL_IPV6_PREFIX:
+EXTERNAL_IPV6_PREFIX:
+
+NAME: labnet-sub
+REGION: us-east4
+NETWORK: labnet
+RANGE: 10.0.0.0/28
+STACK_TYPE: IPV4_ONLY
+IPV6_ACCESS_TYPE:
+INTERNAL_IPV6_PREFIX:
+EXTERNAL_IPV6_PREFIX:
+
+NAME: default
+REGION: australia-southeast1
+NETWORK: default
+RANGE: 10.152.0.0/20
+STACK_TYPE: IPV4_ONLY
+IPV6_ACCESS_TYPE:
+INTERNAL_IPV6_PREFIX:
+EXTERNAL_IPV6_PREFIX:
+
+NAME: default
+REGION: europe-west2
+NETWORK: default
+RANGE: 10.154.0.0/20
+STACK_TYPE: IPV4_ONLY
+IPV6_ACCESS_TYPE:
+INTERNAL_IPV6_PREFIX:
+EXTERNAL_IPV6_PREFIX:
+
+NAME: default
+REGION: europe-west3
+NETWORK: default
+RANGE: 10.156.0.0/20
+STACK_TYPE: IPV4_ONLY
+IPV6_ACCESS_TYPE:
+INTERNAL_IPV6_PREFIX:
+EXTERNAL_IPV6_PREFIX:
+
+NAME: default
+REGION: asia-south1
+NETWORK: default
+RANGE: 10.160.0.0/20
+STACK_TYPE: IPV4_ONLY
+IPV6_ACCESS_TYPE:
+INTERNAL_IPV6_PREFIX:
+EXTERNAL_IPV6_PREFIX:
+
+NAME: default
+REGION: europe-west4
+NETWORK: default
+RANGE: 10.164.0.0/20
+STACK_TYPE: IPV4_ONLY
+IPV6_ACCESS_TYPE:
+INTERNAL_IPV6_PREFIX:
+EXTERNAL_IPV6_PREFIX:
+
+NAME: default
+REGION: europe-north1
+NETWORK: default
+RANGE: 10.166.0.0/20
+STACK_TYPE: IPV4_ONLY
+IPV6_ACCESS_TYPE:
+INTERNAL_IPV6_PREFIX:
+EXTERNAL_IPV6_PREFIX:
+
+NAME: default
+REGION: us-west2
+NETWORK: default
+RANGE: 10.168.0.0/20
+STACK_TYPE: IPV4_ONLY
+IPV6_ACCESS_TYPE:
+INTERNAL_IPV6_PREFIX:
+EXTERNAL_IPV6_PREFIX:
+
+NAME: default
+REGION: us-west3
+NETWORK: default
+RANGE: 10.180.0.0/20
+STACK_TYPE: IPV4_ONLY
+IPV6_ACCESS_TYPE:
+INTERNAL_IPV6_PREFIX:
+EXTERNAL_IPV6_PREFIX:
+
+NAME: default
+REGION: us-west4
+NETWORK: default
+RANGE: 10.182.0.0/20
+STACK_TYPE: IPV4_ONLY
+IPV6_ACCESS_TYPE:
+INTERNAL_IPV6_PREFIX:
+EXTERNAL_IPV6_PREFIX:
+
+NAME: default
+REGION: europe-central2
+NETWORK: default
+RANGE: 10.186.0.0/20
+STACK_TYPE: IPV4_ONLY
+IPV6_ACCESS_TYPE:
+INTERNAL_IPV6_PREFIX:
+EXTERNAL_IPV6_PREFIX:
+
+NAME: default
+REGION: southamerica-west1
+NETWORK: default
+RANGE: 10.194.0.0/20
+STACK_TYPE: IPV4_ONLY
+IPV6_ACCESS_TYPE:
+INTERNAL_IPV6_PREFIX:
+EXTERNAL_IPV6_PREFIX:
+
+NAME: default
+REGION: us-east5
+NETWORK: default
+RANGE: 10.202.0.0/20
+STACK_TYPE: IPV4_ONLY
+IPV6_ACCESS_TYPE:
+INTERNAL_IPV6_PREFIX:
+EXTERNAL_IPV6_PREFIX:
+
+NAME: default
+REGION: us-south1
+NETWORK: default
+RANGE: 10.206.0.0/20
+STACK_TYPE: IPV4_ONLY
+IPV6_ACCESS_TYPE:
+INTERNAL_IPV6_PREFIX:
+EXTERNAL_IPV6_PREFIX:
+
+NAME: default
+REGION: me-west1
+NETWORK: default
+RANGE: 10.208.0.0/20
+STACK_TYPE: IPV4_ONLY
+IPV6_ACCESS_TYPE:
+INTERNAL_IPV6_PREFIX:
+EXTERNAL_IPV6_PREFIX:
+
+NAME: default
+REGION: europe-west12
+NETWORK: default
+RANGE: 10.210.0.0/20
+STACK_TYPE: IPV4_ONLY
+IPV6_ACCESS_TYPE:
+INTERNAL_IPV6_PREFIX:
+EXTERNAL_IPV6_PREFIX:
+
+NAME: default
+REGION: me-central1
+NETWORK: default
+RANGE: 10.212.0.0/20
+STACK_TYPE: IPV4_ONLY
+IPV6_ACCESS_TYPE:
+INTERNAL_IPV6_PREFIX:
+EXTERNAL_IPV6_PREFIX:
+
+NAME: default
+REGION: europe-west10
+NETWORK: default
+RANGE: 10.214.0.0/20
+STACK_TYPE: IPV4_ONLY
+IPV6_ACCESS_TYPE:
+INTERNAL_IPV6_PREFIX:
+EXTERNAL_IPV6_PREFIX:
+
+NAME: default
+REGION: africa-south1
+NETWORK: default
+RANGE: 10.218.0.0/20
+STACK_TYPE: IPV4_ONLY
+IPV6_ACCESS_TYPE:
+INTERNAL_IPV6_PREFIX:
+EXTERNAL_IPV6_PREFIX:
+
+NAME: default
+REGION: northamerica-south1
+NETWORK: default
+RANGE: 10.224.0.0/20
+STACK_TYPE: IPV4_ONLY
+IPV6_ACCESS_TYPE:
+INTERNAL_IPV6_PREFIX:
+EXTERNAL_IPV6_PREFIX:
+PRIORITY: 1000
+ALLOW: icmp,tcp:22
+DENY:
+DISABLED: False
+student_04_6cb3724a0a4d@cloudshell:~ (qwiklabs-gcp-04-60468e282adf)$
+student_04_6cb3724a0a4d@cloudshell:~ (qwiklabs-gcp-04-60468e282adf)$
+student_04_6cb3724a0a4d@cloudshell:~ (qwiklabs-gcp-04-60468e282adf)$ clesr
+-bash: clesr: command not found
+student_04_6cb3724a0a4d@cloudshell:~ (qwiklabs-gcp-04-60468e282adf)$ clear
+student_04_6cb3724a0a4d@cloudshell:~ (qwiklabs-gcp-04-60468e282adf)$ gcloud compute firewall-rules describe labnet-allow-internal
+allowed:
+
+- IPProtocol: icmp
+- IPProtocol: tcp
+  ports:
+  - '22'
+    creationTimestamp: '2025-04-19T04:27:25.154-07:00'
+    description: ''
+    direction: INGRESS
+    disabled: false
+    id: '2998983247031842418'
+    kind: compute#firewall
+    logConfig:
+    enable: false
+    name: labnet-allow-internal
+    network: https://www.googleapis.com/compute/v1/projects/qwiklabs-gcp-04-60468e282adf/global/networks/labnet
+    priority: 1000
+    selfLink: https://www.googleapis.com/compute/v1/projects/qwiklabs-gcp-04-60468e282adf/global/firewalls/labnet-allow-internal
+    sourceRanges:
+- 0.0.0.0/0
+  student_04_6cb3724a0a4d@cloudshell:~ (qwiklabs-gcp-04-60468e282adf)$
+  student_04_6cb3724a0a4d@cloudshell:~ (qwiklabs-gcp-04-60468e282adf)$
+  student_04_6cb3724a0a4d@cloudshell:~ (qwiklabs-gcp-04-60468e282adf)$ gcloud compute networks create privatenet --subnet-mode=custom
+  Created [https://www.googleapis.com/compute/v1/projects/qwiklabs-gcp-04-60468e282adf/global/networks/privatenet].
+  NAME: privatenet
+  SUBNET_MODE: CUSTOM
+  BGP_ROUTING_MODE: REGIONAL
+  IPV4_RANGE:
+  GATEWAY_IPV4:
+  INTERNAL_IPV6_RANGE:
+
+Instances on this network will not be reachable until firewall rules
+are created. As an example, you can allow all internal traffic between
+instances as well as SSH, RDP, and ICMP by running:
+
+$ gcloud compute firewall-rules create <FIREWALL_NAME> --network privatenet --allow tcp,udp,icmp --source-ranges <IP_RANGE>
+$ gcloud compute firewall-rules create <FIREWALL_NAME> --network privatenet --allow tcp:22,tcp:3389,icmp
+
+student_04_6cb3724a0a4d@cloudshell:~ (qwiklabs-gcp-04-60468e282adf)$
+student_04_6cb3724a0a4d@cloudshell:~ (qwiklabs-gcp-04-60468e282adf)$
+student_04_6cb3724a0a4d@cloudshell:~ (qwiklabs-gcp-04-60468e282adf)$
+student_04_6cb3724a0a4d@cloudshell:~ (qwiklabs-gcp-04-60468e282adf)$
+student_04_6cb3724a0a4d@cloudshell:~ (qwiklabs-gcp-04-60468e282adf)$
+student_04_6cb3724a0a4d@cloudshell:~ (qwiklabs-gcp-04-60468e282adf)$
+student_04_6cb3724a0a4d@cloudshell:~ (qwiklabs-gcp-04-60468e282adf)$
+student_04_6cb3724a0a4d@cloudshell:~ (qwiklabs-gcp-04-60468e282adf)$
+gcloud compute networks subnets create private-sub \
+ --network=privatenet \
+ --region="us-east4" \
+ --range 10.1.0.0/28
+Created [https://www.googleapis.com/compute/v1/projects/qwiklabs-gcp-04-60468e282adf/regions/us-east4/subnetworks/private-sub].
+NAME: private-sub
+REGION: us-east4
+NETWORK: privatenet
+RANGE: 10.1.0.0/28
+STACK_TYPE: IPV4_ONLY
+IPV6_ACCESS_TYPE:
+INTERNAL_IPV6_PREFIX:
+EXTERNAL_IPV6_PREFIX:
+student_04_6cb3724a0a4d@cloudshell:~ (qwiklabs-gcp-04-60468e282adf)$
+student_04_6cb3724a0a4d@cloudshell:~ (qwiklabs-gcp-04-60468e282adf)$
+student_04_6cb3724a0a4d@cloudshell:~ (qwiklabs-gcp-04-60468e282adf)$ gcloud compute firewall-rules create privatenet-deny \
+ --network=privatenet \
+ --action=DENY \
+ --rules=icmp,tcp:22 \
+ --source-ranges=0.0.0.0/0
+Creating firewall...working..Created [https://www.googleapis.com/compute/v1/projects/qwiklabs-gcp-04-60468e282adf/global/firewalls/privatenet-deny].
+Creating firewall...done.  
+NAME: privatenet-deny
+NETWORK: privatenet
+DIRECTION: INGRESS
+PRIORITY: 1000
+ALLOW:
+DENY: icmp,tcp:22
+DISABLED: False
+student_04_6cb3724a0a4d@cloudshell:~ (qwiklabs-gcp-04-60468e282adf)$
+gcloud compute instances create pnet-vm \
+--zone="us-east4-a" \
+--machine-type=n1-standard-1 \
+--subnet=private-sub
+Created [https://www.googleapis.com/compute/v1/projects/qwiklabs-gcp-04-60468e282adf/zones/us-east4-a/instances/pnet-vm].
+NAME: pnet-vm
+ZONE: us-east4-a
+MACHINE_TYPE: n1-standard-1
+PREEMPTIBLE:
+INTERNAL_IP: 10.1.0.2
+EXTERNAL_IP: 35.245.54.130
+STATUS: RUNNING
+student_04_6cb3724a0a4d@cloudshell:~ (qwiklabs-gcp-04-60468e282adf)$
+student_04_6cb3724a0a4d@cloudshell:~ (qwiklabs-gcp-04-60468e282adf)$
+student_04_6cb3724a0a4d@cloudshell:~ (qwiklabs-gcp-04-60468e282adf)$ gcloud compute instances create lnet-vm \
+--zone="us-east4-a" \
+--machine-type=n1-standard-1 \
+--subnet=labnet-sub
+Created [https://www.googleapis.com/compute/v1/projects/qwiklabs-gcp-04-60468e282adf/zones/us-east4-a/instances/lnet-vm].
+NAME: lnet-vm
+ZONE: us-east4-a
+MACHINE_TYPE: n1-standard-1
+PREEMPTIBLE:
+INTERNAL_IP: 10.0.0.2
+EXTERNAL_IP: 34.48.29.151
+STATUS: RUNNING
+student_04_6cb3724a0a4d@cloudshell:~ (qwiklabs-gcp-04-60468e282adf)$ gcloud compute instances list --sort-by=us-east4-a
+NAME: lnet-vm
+ZONE: us-east4-a
+MACHINE_TYPE: n1-standard-1
+PREEMPTIBLE:
+INTERNAL_IP: 10.0.0.2
+EXTERNAL_IP: 34.48.29.151
+STATUS: RUNNING
+
+NAME: pnet-vm
+ZONE: us-east4-a
+MACHINE_TYPE: n1-standard-1
+PREEMPTIBLE:
+INTERNAL_IP: 10.1.0.2
+EXTERNAL_IP: 35.245.54.130
+STATUS: RUNNING
+
+//////////
+
+### Configure IAM Permissions via gcloud
+
+What is IAM?
+Google Cloud offers Cloud Identity and Access Management (IAM), which lets you manage access control by defining who (identity) has what access (role) for which resource.
+
+In IAM, permission to access a resource isn't granted directly to the end user. Instead, permissions are grouped into roles, and roles are granted to authenticated principals. (In the past, IAM often referred to principals as members. Some APIs still use this term.)
+
+Identities
+In Cloud IAM, you grant access to principals. Principals can be of the following types:
+
+Google Account
+Service account
+Google group
+Google Workspace account
+Cloud Identity domain
+All authenticated users
+All users
+
+Roles
+A role is a collection of permissions. You cannot assign a permission to the user directly; instead you grant them a role. When you grant a role to a user, you grant them all the permissions that the role contains.
+
+What is gcloud?
+The gcloud CLI is a part of the Cloud SDK. You must download and install the SDK on your system and initialize it before you can use the gcloud command-line tool. You can use this tool to perform many common platform tasks either from the command-line or in scripts and other automations.
+
+Task 1. Configure the gcloud environment
+This lab already has a Compute Engine instance called centos-clean that simulates an environment that doesn't have gcloud installed. You connect to this instance using the Google Cloud console.
+
+Open the list of compute instances by going to Navigation Menu > Compute Engine > VM instances.
+
+On the line with the compute instance named centos-clean, click SSH.
+
+In the SSH session, set the region and zone:
+
+gcloud config set compute/region us-east4
+gcloud config set compute/zone us-east4-a
+
+Create instance using below command :
+gcloud compute instances create lab-1 --zone us-east4-a --machine-type=e2-standard-2
+
+Create a new IAM configuration
+In this lab you have a second Google account you can log on with. This account has read-only (viewer) access to the first project. You create a new configuration for that user.
+
+Start a new gcloud configuration for the second user account. Inside the SSH session run:
+
+gcloud init --no-launch-browser
+    copy pst url in browser -> accept -> get code --> enter on the command prompt
+
+
+gcloud iam roles list | grep "name:"
+
+
+gcloud iam roles describe roles/compute.instanceAdmin
+
+gcloud config configurations activate user2
