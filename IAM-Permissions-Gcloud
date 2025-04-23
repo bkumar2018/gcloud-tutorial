@@ -1,0 +1,3460 @@
+What is IAM?
+Google Cloud offers Cloud Identity and Access Management (IAM), which lets you manage access control by defining who (identity) has what access (role) for which resource.
+
+In IAM, permission to access a resource isn't granted directly to the end user. Instead, permissions are grouped into roles, and roles are granted to authenticated principals. (In the past, IAM often referred to principals as members. Some APIs still use this term.)
+
+Identities
+In Cloud IAM, you grant access to principals. Principals can be of the following types:
+
+Google Account
+Service account
+Google group
+Google Workspace account
+Cloud Identity domain
+All authenticated users
+All users
+
+In this lab, you use Google accounts, service accounts, and Cloud Identity domain groups.
+
+Roles
+A role is a collection of permissions. You cannot assign a permission to the user directly; instead you grant them a role. When you grant a role to a user, you grant them all the permissions that the role contains.
+
+gcloud --version
+
+authenticate gcloud
+
+gcloud auth login
+
+gcloud config set compute/region us-central1
+gcloud config set compute/zone us-central1-c
+
+gcloud compute instances create lab-1 --zone us-central1-c --machine-type=e2-standard-2
+
+gcloud config list
+gcloud compute zones list
+
+gcloud config set compute/zone <zone>
+
+gcloud config list
+
+gcloud compute instances create lab-1 --zone us-central1-f
+
+gcloud init --no-launch-browser
+
+login with user2
+
+gcloud config configurations activate user2
+
+Binding role:
+gcloud projects add-iam-policy-binding $PROJECTID2 --member user:$USERID2 --role=roles/iam.serviceAccountUser
+
+service account:
+gcloud iam service-accounts create devops --display-name devops
+
+student-04-e3cbc1a204e5@centos-clean ~]$ gcloud iam service-accounts list --filter "displayName=devops"
+DISPLAY NAME EMAIL DISABLED
+devops devops@qwiklabs-gcp-03-957d45c0f6dd.iam.gserviceaccount.com False
+
+Service accounts always provide full admin rights to the project. ---> False
+
+///////////////////////////////////////////////////////////////////////
+
+Task 1. Configure the gcloud environment
+This lab already has a Compute Engine instance called centos-clean that simulates an environment that doesn't have gcloud installed. You connect to this instance using the Google Cloud console.
+
+Open the list of compute instances by going to Navigation Menu > Compute Engine > VM instances.
+
+On the line with the compute instance named centos-clean, click SSH.
+
+Note: About Compute Engine instances: There are Windows and Linux types of instances. In this lab you use the Linux instance type. You can easily connect to Linux instances using the Secure Shell (SSH) client via the web browser.
+You are automatically connected to the instance. Google Cloud manages the authentication keys for you, keeping them safe and available for only those you allow access.
+First test, confirm that gcloud is successfully installed by checking the version. Inside the SSH session run:
+gcloud --version
+Copied!
+Create a new instance and updating the default zone
+After verification that gcloud command-line tool is installed , make some changes by creating a compute instance.
+
+First, authenticate in gcloud. Inside the SSH session, run:
+gcloud auth login
+Copied!
+Press ENTER when you see the prompt Do you want to continue (Y/n)?
+
+Navigate to the link displayed in a new tab.
+
+Click on your active username (student-04-e3cbc1a204e5@qwiklabs.net), and click Allow.
+
+When you see the prompt Enter the following verification code in gcloud CLI on the machine you want to log into, click on the copy button then go back to the SSH session, and paste the code into the prompt Enter authorization code:.
+
+In the SSH session, set the region and zone:
+
+gcloud config set compute/region us-central1
+gcloud config set compute/zone us-central1-c
+Copied!
+Inside the SSH session run:
+gcloud compute instances create lab-1 --zone us-central1-c --machine-type=e2-standard-2
+Copied!
+If you have correctly set everything up, the command creates an instance.
+
+But what size? And where? What image is used?
+
+There are a number of defaults the service uses. Some can be controlled in the gcloud configuration. For example, the location of the instance is controlled by the zone setting.
+
+Assessment Completed!
+Create an instance with name as lab-1 in Project 1
+Assessment Completed!
+Check your current gcloud configuration. Inside the SSH session run:
+gcloud config list
+Copied!
+You now see a compute section, a core section, and an active configuration. You can change each of these, but for this lab you'll only change the zone. Look at the zone your VM was created in.
+
+Now list all the zones available to use by running the following inside the SSH session run:
+gcloud compute zones list
+Copied!
+Identify one of the other zones in the same region as you. For example, if your current zone is us-west2-a, you could select us-west2-b.
+
+Change your current zone for another zone in the same region. Inside the SSH session run the following, replacing ZONE with the zone you selected:
+
+gcloud config set compute/zone ZONE
+Copied!
+Verify the zone change was made. Inside the SSH session run:
+gcloud config list
+Copied!
+You see the stated zone reflects the change you made.
+
+You can change other settings using the gcloud config set command. Those changes are permanent; they are written to your home directory.
+
+The default configuration is stored in ~/.config/gcloud/configurations/config_default.
+
+If you want to use a zone other than the default zone when creating an instance, you can use --zone switch. For example, gcloud compute instances create lab-1 --zone us-central1-f
+
+Zone was changed, good job!
+Update the default zone
+Zone was changed, good job!
+Verify the zone was written to the configuration file. Inside the SSH session run:
+cat ~/.config/gcloud/configurations/config_default
+Copied!
+You can see the configuration is just stored as text and can be backed up or copied.
+
+Task 2. Create and switch between multiple IAM configurations
+You have now set up one account. In situations when you need to work on different teams or access different accounts, you can also manage that with gcloud config.
+
+In your next task you learn how to create a second configuration and switch between both of them.
+
+Create a new IAM configuration
+In this lab you have a second Google account you can log on with. This account has read-only (viewer) access to the first project. You create a new configuration for that user.
+
+Start a new gcloud configuration for the second user account. Inside the SSH session run:
+gcloud init --no-launch-browser
+Copied!
+Select option 2, Create a new configuration.
+
+configuration name: Type user2.
+
+Log in with a new account: select option 3 - you're logging in with the other provided user name.
+
+Press ENTER when you see the prompt Do you want to continue (Y/n)?
+
+Navigate to the link displayed in a new tab.
+
+Click Use another account
+
+Copy the second user account (student-04-e3c9f29a26e9@qwiklabs.net), and paste into the email or phone prompt.
+
+Copy the same password that you started the lab with, and paste into the enter your password prompt.
+
+Click I understand.
+
+Click Allow.
+
+You are accepting that the Cloud SDK has the same access as your Google account.
+
+When you see the prompt Enter the following verification code in gcloud CLI on the machine you want to log into, click on the copy button then go back to the SSH session and paste the code into the prompt Enter authorization code:.
+
+For Pick cloud project to use: locate your current project (qwiklabs-gcp-02-1066fac60281) and then type in the number that corresponds to the project.
+
+The initialization completes and you see the zone and region are set for you.
+
+Success: Created a configuration for user2 with name user2.
+Check gcloud user2 configuration was created
+Success: Created a configuration for user2 with name user2.
+Test the new account
+This new account has viewer only access to the project, so you can test that you are indeed using this account by trying to view and then create some resources.
+
+Check that you can view details in the first project. Inside the SSH session run:
+gcloud compute instances list
+Copied!
+The second user account has viewer access so you should see centos-clean and lab-1 instances listed.
+
+Check that you cannot create an instance in the first project, as your assigned role is basic viewer. Inside the SSH session run:
+gcloud compute instances create lab-2 --zone us-west1-a --machine-type=e2-standard-2
+Copied!
+Because the second user account has only viewer access, they are not allowed to create an instance, so this command fails. It takes a little time to fail.
+
+Change back to your first user's configuration (default). Inside the SSH session run:
+gcloud config configurations activate default
+Copied!
+You are now back to using your original user account credentials. Later you switch between these two accounts as you learn about roles and permissions.
+
+When running a gcloud command, how do you override the configured zone for just that one time?
+close
+Add the switch -zone DIFFERENT_ZONE to the command
+close
+run the command gcloud config set zone DIFFERENT_ZONE before you run the command.
+Add the switch --project YOUR_PROJECT_ID to the command
+check
+Add the switch --zone DIFFERENT_ZONE to the command
+
+Task 3. Identify and assign correct IAM permissions
+You have been provided two user accounts for this project. The first user has complete control of both projects and can be thought of as the admin account. The second user has viewer only access to the two projects. Call the second user a devops user and that user identity represents a typical devops level user.
+
+Next you use gcloud to configure access to one project for the devops user by creating a custom role for the project that permits creation of buckets and instances.
+
+Examine roles and permissions
+To view all the roles, run the following inside the SSH session run:
+gcloud iam roles list | grep "name:"
+Copied!
+The list of roles is returned. The addition of grep "name:" to the command reduces the amount of data returned to just the names of the roles.
+
+Inspect one of these roles to see the permissions assigned to the role. To view the permissions use gcloud iam roles describe. Try looking at the simple role roles/compute.instanceAdmin.
+
+Examine the compute.instanceAdmin predefined role. Inside the SSH session run:
+gcloud iam roles describe roles/compute.instanceAdmin
+Copied!
+You can see roles/compute.instanceAdmin has many permissions, but these are the minimum needed for later:
+
+compute.instances.create
+compute.instances.delete
+compute.instances.start
+compute.instances.stop
+compute.instances.update
+compute.disks.create
+compute.subnetworks.use
+compute.subnetworks.useExternalIp
+compute.instances.setMetadata
+compute.instances.setServiceAccount
+To review the full list of roles and the permissions assigned, refer to the IAM permissions reference Guide.
+
+Grant access to the second user to the second project
+Now that you know that roles contain permissions, how do you assign a role (and therefore all the associated permissions), to a user account?
+
+There are two ways to attach a role:
+
+To the user and an organization
+To a user and a project
+Next you attach the basic role of "viewer" to the second user onto the second project.
+
+Test that the second user doesn't have access to the second project.
+Switch gcloud configuration back to the second user (user2). Inside the SSH session run:
+gcloud config configurations activate user2
+Copied!
+Now you're back to user2.
+
+Set PROJECTID2 to the second project. Inside the SSH session, run the following:
+echo "export PROJECTID2=qwiklabs-gcp-03-957d45c0f6dd" >> ~/.bashrc
+Copied!
+. ~/.bashrc
+gcloud config set project $PROJECTID2
+Copied!
+Note: This command appends the bashrc file, so be careful.
+You get a warning: WARNING: You do not appear to have access to project [your 2nd project id] or it does not exist.
+
+When prompted, Do you want to continue (Y/n)?, type N and press ENTER.
+This means that user 2 doesn't have access to the PROJECTID2 project, which you fix in the next section.
+
+Assign the viewer role to the second user in the second project
+Switch back to the default gcloud configuration, which has the permission to grant access to the second user. Inside the SSH session run:
+gcloud config configurations activate default
+Copied!
+Install jq:
+sudo yum -y install epel-release
+sudo yum -y install jq
+Copied!
+Next, set the value of USERID2 to the second user name and bind the role of viewer to the second user onto the second project.
+
+Inside the SSH session, run the following:
+echo "export USERID2=student-04-e3c9f29a26e9@qwiklabs.net" >> ~/.bashrc
+Copied!
+. ~/.bashrc
+gcloud projects add-iam-policy-binding $PROJECTID2 --member user:$USERID2 --role=roles/viewer
+Copied!
+Once you have run the command, the text looks something like the following (you may need to scroll up):
+
+Updated IAM policy for project [qwiklabs-gcp-03-957d45c0f6dd].
+bindings:
+...
+
+- members:
+  - serviceAccount:qwiklabs-gcp-03-957d45c0f6dd@qwiklabs-gcp-03-957d45c0f6dd.iam.gserviceaccount.com
+    role: roles/storage.admin
+- members:
+  - user:student-04-e3cbc1a204e5@qwiklabs.net
+  - user:student-04-e3c9f29a26e9@qwiklabs.net
+    role: roles/viewer
+    Assessment Completed!
+    Restricting Username 2 to roles/viewer in Project 2
+    Assessment Completed!
+    Task 4. Test that user2 has access
+    Switch your gcloud configuration to user2. Inside the SSH session run:
+    gcloud config configurations activate user2
+    Copied!
+    Change the configuration for user2 to the second project. Inside the SSH session run:
+    gcloud config set project $PROJECTID2
+    Copied!
+    You should not see an error message this time.
+
+Verify you have viewer access. Inside the SSH session run:
+gcloud compute instances list
+Copied!
+You now see 0 instances in this project.
+
+Try to create an instance in the second project as the second user. Inside the SSH session run:
+gcloud compute instances create lab-2 --zone us-west1-a --machine-type=e2-standard-2
+Copied!
+This command fails because user2 only has viewer access to the project.
+
+Switch your gcloud configuration to default. Inside the SSH session run:
+gcloud config configurations activate default
+Copied!
+You are now back to using your original user account credentials.
+
+Create a new role with permissions
+Next, create the new role with the set of permissions needed for the devops team.
+
+Create a custom role called devops that has the permissions to create an instance. Inside the SSH session run:
+gcloud iam roles create devops --project $PROJECTID2 --permissions "compute.instances.create,compute.instances.delete,compute.instances.start,compute.instances.stop,compute.instances.update,compute.disks.create,compute.subnetworks.use,compute.subnetworks.useExternalIp,compute.instances.setMetadata,compute.instances.setServiceAccount"
+Copied!
+This command creates a custom role in the project called devops with the permissions to create and manage instances.
+
+The full name of the role is listed, note the role is in the project so the path is in the pattern of projects/PROJECT/roles/ROLENAME.
+
+Created a new role with permissions for the devops team, good job!
+Create a new role with permissions for the devops team
+Created a new role with permissions for the devops team, good job!
+Bind the role to the second account to both projects
+You now have the role created and need to bind the user and the role to the project. Use gcloud projects add-iam-policy-binding to perform the binding. To make this command easier to execute, set a couple of environment variables first; the project id and the user account.
+
+Bind the role of iam.serviceAccountUser to the second user onto the second project. Inside the SSH session run:
+gcloud projects add-iam-policy-binding $PROJECTID2 --member user:$USERID2 --role=roles/iam.serviceAccountUser
+Copied!
+You need permissions to create an instance with a service account attached. The role iam.serviceAccountUser has those permissions, so use this pre-defined role.
+
+student-04-e3c9f29a26e9@qwiklabs.net is bound to the role "roles/iam.serviceAccountUser", good job!
+Check user2 is bound to project2 and the role roles/iam.serviceAccountUser
+student-04-e3c9f29a26e9@qwiklabs.net is bound to the role "roles/iam.serviceAccountUser", good job!
+Bind the custom role devops to the second user onto the second project. You can find the second user account on the left of this page. Make sure you set USERID to the second user account.
+Inside the SSH session run:
+
+gcloud projects add-iam-policy-binding $PROJECTID2 --member user:$USERID2 --role=projects/$PROJECTID2/roles/devops
+Copied!
+Once you have run the command, the text that looks something like the following (you may need to scroll up):
+
+Updated IAM policy for project [qwiklabs-gcp-03-957d45c0f6dd].
+bindings:
+
+- members:
+  - user:student-04-e3c9f29a26e9@qwiklabs.net@qwiklabs.net
+    role: projects/qwiklabs-gcp-03-957d45c0f6dd/roles/devops
+    student-04-e3c9f29a26e9@qwiklabs.net is bound to the role "projects/qwiklabs-gcp-03-957d45c0f6dd/roles/devops", good job!
+    Bound Username 2 to devops role
+    student-04-e3c9f29a26e9@qwiklabs.net is bound to the role "projects/qwiklabs-gcp-03-957d45c0f6dd/roles/devops", good job!
+    Test the newly assigned permissions.
+    Switch your gcloud configuration to user2. Inside the SSH session run:
+    gcloud config configurations activate user2
+    Copied!
+    Now you're back to user2.
+
+Try to create an instance called lab-2. Inside the SSH session run:
+gcloud compute instances create lab-2 --zone us-west1-a --machine-type=e2-standard-2
+Copied!
+Now the instance creation works for user2.
+
+lab-2 created, good job!
+Create an instance with name as lab-2 in Project 2
+lab-2 created, good job!
+Verify the instance exists. Inside the SSH session run:
+gcloud compute instances list
+Copied!
+Your environment
+After these last changes your environment looks like this:
+
+Lab progress illustration
+
+What are two of the three items you need to provide when binding an IAM role to a project?
+
+zone
+check
+account
+
+service identifier
+
+network
+check
+project id
+
+Task 5. Using a service account
+You have seen how to authenticate and use gcloud to access Google Cloud services with roles. Now you'll look at a typical approach.
+
+You have an application that uses the Application Programming Interfaces (APIs) to read and write to Cloud Storage buckets. You don't want to have to authenticate every time you launch a new server, that would be both painful and not in the spirit of using the cloud! So, you use service accounts.
+
+A service account is a special Google account that belongs to your application or a virtual machine (VM) instead of to an individual end user. Your application uses the service account to call the Google API of a service so that the users aren't directly involved.
+
+Learn more about service accounts from the Service accounts Guide.
+
+Now you create a service account, use that service account with a compute instance, then test that the service account allows the access you need.
+
+Create a service account
+Switch your gcloud configuration to default, user2 doesn't have the rights to set up and configure service accounts. Inside the SSH session run:
+gcloud config configurations activate default
+Copied!
+Set the project to PROJECTID2 in your configuration. Inside the SSH session run:
+gcloud config set project $PROJECTID2
+Copied!
+Make sure you are targeting the right project.
+
+Create the service account. Inside the SSH session run:
+gcloud iam service-accounts create devops --display-name devops
+Copied!
+devops service account exists, good job!
+Check the created devops service account
+devops service account exists, good job!
+Get the service account email address. Inside the SSH session run:
+gcloud iam service-accounts list --filter "displayName=devops"
+Copied!
+Note: The filter shows only the line you are interested in. Notice that the email address contains the role name and the project id.
+Put the email address into a local variable called SA. Inside the SSH session run:
+SA=$(gcloud iam service-accounts list --format="value(email)" --filter "displayName=devops")
+Copied!
+This command sets the SA local variable to the email address of the service account. Pretty useful right?
+
+Give the service account the role of iam.serviceAccountUser. Inside the SSH session run:
+gcloud projects add-iam-policy-binding $PROJECTID2 --member serviceAccount:$SA --role=roles/iam.serviceAccountUser
+Copied!
+This role allows the service account to assign a service account to a compute instance.
+
+devops@qwiklabs-gcp-03-957d45c0f6dd.iam.gserviceaccount.com is bound to the role "roles/iam.serviceAccountUser", good job!
+Check devops service account is bound to project2 and the role roles/iam.serviceAccountUser
+devops@qwiklabs-gcp-03-957d45c0f6dd.iam.gserviceaccount.com is bound to the role "roles/iam.serviceAccountUser", good job!
+Task 6. Using the service account with a compute instance
+Give the service account the role of compute.instanceAdmin. Inside the SSH session run:
+gcloud projects add-iam-policy-binding $PROJECTID2 --member serviceAccount:$SA --role=roles/compute.instanceAdmin
+Copied!
+This role allows the service account to manage compute instances.
+
+devops@qwiklabs-gcp-03-957d45c0f6dd.iam.gserviceaccount.com is bound to the role "roles/compute.instanceAdmin", good job!
+Check devops service account is bound to project2 and the role roles/compute.instanceAdmin
+devops@qwiklabs-gcp-03-957d45c0f6dd.iam.gserviceaccount.com is bound to the role "roles/compute.instanceAdmin", good job!
+Create an instance with the devops service account attached. You also have to specify an access scope that defines the API calls that the instance can make. Inside the SSH session run:
+gcloud compute instances create lab-3 --zone us-west1-a --machine-type=e2-standard-2 --service-account $SA --scopes "https://www.googleapis.com/auth/compute"
+Copied!
+Access scopes are the legacy method of specifying permissions for your instance. Access scopes are not a security mechanism. Instead, they define the default OAuth scopes used in requests from the gcloud tool or the client libraries. They have no effect when making requests not authenticated through OAuth, such as gRPC or the SignBlob APIs.
+
+You must set up access scopes when you configure an instance to run as a service account.
+
+A best practice is to set the full cloud-platform access scope on the instance, then securely limit the service account's API access with IAM roles.
+
+Access scopes apply on a per-instance basis. You set access scopes when creating an instance and the access scopes persist only for the life of the instance.
+
+Access scopes have no effect if you have not enabled the related API on the project that the service account belongs to. For example, granting an access scope for Cloud Storage on a virtual machine instance allows the instance to call the Cloud Storage API only if you have enabled the Cloud Storage API on the project.
+
+devops@qwiklabs-gcp-03-957d45c0f6dd.iam.gserviceaccount.com is attached as the service account, good job!
+Check lab-3 has the service account attached
+devops@qwiklabs-gcp-03-957d45c0f6dd.iam.gserviceaccount.com is attached as the service account, good job!
+Task 7. Test the service account
+Connect to the newly created instance using gcloud compute ssh. Inside the SSH session run:
+gcloud compute ssh lab-3 --zone us-west1-a
+Copied!
+Press ENTER when asked if you want to continue.
+
+Press ENTER twice to skip making a password.
+
+The default image used already contains gcloud configuration. Inside the SSH session run:
+gcloud config list
+Copied!
+The configuration now has the service account
+
+Create an instance. This tests that you have the necessary permissions via the service account:
+gcloud compute instances create lab-4 --zone us-west1-a --machine-type=e2-standard-2
+Copied!
+You can press ENTER to accept the default zone for this VM.
+
+Check roles attached are working. Inside the SSH session run:
+gcloud compute instances list
+Copied!
+Because the service account has permissions, you can see the instances listed.
+
+Your environment now looks like this
+Final lab environment illustration
+
+What is NOT true about service accounts?
+It prevents a user from directly getting involved in setting up access on the instance.
+close
+It allows automated deployments of resources.
+Service accounts can be assigned only the rights necessary for the access required.
+check
+Service accounts always provide full admin rights to the project.
+
+Congratulations!
+You have completed the following tasks using the Cloud SDK tool, gcloud:
+
+Installed and configured the gcloud client
+Created and switched between multiple IAM configurations
+Identified and assigned correct IAM permissions
+Created and used a service account
+Next steps / Learn more
+Documentation for Cloud Identity and Access Management
+Check out these labs:
+BigQuery: Qwik Start - Command Line
+Configuring Networks via gcloud
+
+///////////////////////////////////////////////////////////
+
+Command-line output from above labs:
+
+[student-04-e3cbc1a204e5@centos-clean ~]$
+[student-04-e3cbc1a204e5@centos-clean ~]$ gcloud --version
+Google Cloud SDK 518.0.0
+alpha 2025.04.11
+beta 2025.04.11
+bq 2.1.15
+bundled-python3-unix 3.12.8
+core 2025.04.11
+gcloud-crc32c 1.0.0
+gsutil 5.33
+[student-04-e3cbc1a204e5@centos-clean ~]$
+[student-04-e3cbc1a204e5@centos-clean ~]$
+[student-04-e3cbc1a204e5@centos-clean ~]$ gcloud authe login
+
+ERROR: (gcloud) Invalid choice: 'authe'.
+Maybe you meant:
+gcloud auth login
+gcloud auth application-default login
+
+To search the help text of gcloud commands, run:
+gcloud help -- SEARCH_TERMS
+[student-04-e3cbc1a204e5@centos-clean ~]$
+[student-04-e3cbc1a204e5@centos-clean ~]$ ^C
+[student-04-e3cbc1a204e5@centos-clean ~]$
+[student-04-e3cbc1a204e5@centos-clean ~]$ gcloud auth login
+
+You are running on a Google Compute Engine virtual machine.
+It is recommended that you use service accounts for authentication.
+
+You can run:
+
+$ gcloud config set account `ACCOUNT`
+
+to switch accounts if necessary.
+
+Your credentials may be visible to others with access to this
+virtual machine. Are you sure you want to authenticate with
+your personal account?
+
+Do you want to continue (Y/n)? y
+
+Go to the following link in your browser, and complete the sign-in prompts:
+
+    https://accounts.google.com/o/oauth2/auth?response_type=code&client_id=32555940559.apps.googleusercontent.com&redirect_uri=https%3A%2F%2Fsdk.cloud.google.com%2Fauthcode.html&scope=openid+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.email+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcloud-platform+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fappengine.admin+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fsqlservice.login+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcompute+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Faccounts.reauth&state=7Kij6p415bTLFT8b0dRhX2UOfr86j6&prompt=consent&token_usage=remote&access_type=offline&code_challenge=yXVzyfX06hUj0ZtnRK-8QeFEwLKH3q_DAxiineauhF0&code_challenge_method=S256
+
+Once finished, enter the verification code provided in your browser: 4/0Ab_5qlk53MRZag_6DrkW_V5qaa1ESIQmyC4QHO5mmIfVFlTRd3885zPm3lwV_80WJk678w
+
+You are now logged in as [student-04-e3cbc1a204e5@qwiklabs.net].
+Your current project is [qwiklabs-gcp-02-1066fac60281]. You can change this setting by running:
+$ gcloud config set project PROJECT_ID
+[student-04-e3cbc1a204e5@centos-clean ~]$
+[student-04-e3cbc1a204e5@centos-clean ~]$
+[student-04-e3cbc1a204e5@centos-clean ~]$
+[student-04-e3cbc1a204e5@centos-clean ~]$
+[student-04-e3cbc1a204e5@centos-clean ~]$ gcloud config set compute/region us-central1
+gcloud config set compute/zone us-central1-c
+WARNING: Property validation for compute/region was skipped.
+Updated property [compute/region].
+WARNING: Property validation for compute/zone was skipped.
+Updated property [compute/zone].
+[student-04-e3cbc1a204e5@centos-clean ~]$
+[student-04-e3cbc1a204e5@centos-clean ~]$
+[student-04-e3cbc1a204e5@centos-clean ~]$ gcloud compute instances create lab-1 --zone us-central1-c --machine-type=e2-standard-2
+
+Created [https://www.googleapis.com/compute/v1/projects/qwiklabs-gcp-02-1066fac60281/zones/us-central1-c/instances/lab-1].
+NAME ZONE MACHINE_TYPE PREEMPTIBLE INTERNAL_IP EXTERNAL_IP STATUS
+lab-1 us-central1-c e2-standard-2 10.128.0.3 34.70.87.34 RUNNING
+[student-04-e3cbc1a204e5@centos-clean ~]$
+[student-04-e3cbc1a204e5@centos-clean ~]$ gcloud config list
+[compute]
+region = us-central1
+zone = us-central1-c
+[core]
+account = student-04-e3cbc1a204e5@qwiklabs.net
+disable_usage_reporting = True
+project = qwiklabs-gcp-02-1066fac60281
+
+Your active configuration is: [default]
+[student-04-e3cbc1a204e5@centos-clean ~]$ gcloud compute zones list
+NAME REGION STATUS NEXT_MAINTENANCE TURNDOWN_DATE
+us-east1-b us-east1 UP
+us-east1-c us-east1 UP
+us-east1-d us-east1 UP
+us-east4-c us-east4 UP
+us-east4-b us-east4 UP
+us-east4-a us-east4 UP
+us-central1-c us-central1 UP
+us-central1-a us-central1 UP
+us-central1-f us-central1 UP
+us-central1-b us-central1 UP
+us-west1-b us-west1 UP
+us-west1-c us-west1 UP
+us-west1-a us-west1 UP
+europe-west4-a europe-west4 UP
+europe-west4-b europe-west4 UP
+europe-west4-c europe-west4 UP
+europe-west1-b europe-west1 UP
+europe-west1-d europe-west1 UP
+europe-west1-c europe-west1 UP
+europe-west3-c europe-west3 UP
+europe-west3-a europe-west3 UP
+europe-west3-b europe-west3 UP
+europe-west2-c europe-west2 UP
+europe-west2-b europe-west2 UP
+europe-west2-a europe-west2 UP
+asia-east1-b asia-east1 UP
+asia-east1-a asia-east1 UP
+asia-east1-c asia-east1 UP
+asia-southeast1-b asia-southeast1 UP
+asia-southeast1-a asia-southeast1 UP
+asia-southeast1-c asia-southeast1 UP
+asia-northeast1-b asia-northeast1 UP
+asia-northeast1-c asia-northeast1 UP
+asia-northeast1-a asia-northeast1 UP
+asia-south1-c asia-south1 UP
+asia-south1-b asia-south1 UP
+asia-south1-a asia-south1 UP
+australia-southeast1-b australia-southeast1 UP
+australia-southeast1-c australia-southeast1 UP
+australia-southeast1-a australia-southeast1 UP
+southamerica-east1-b southamerica-east1 UP
+southamerica-east1-c southamerica-east1 UP
+southamerica-east1-a southamerica-east1 UP
+africa-south1-a africa-south1 UP
+africa-south1-b africa-south1 UP
+africa-south1-c africa-south1 UP
+asia-east2-a asia-east2 UP
+asia-east2-b asia-east2 UP
+asia-east2-c asia-east2 UP
+asia-northeast2-a asia-northeast2 UP
+asia-northeast2-b asia-northeast2 UP
+asia-northeast2-c asia-northeast2 UP
+asia-northeast3-a asia-northeast3 UP
+asia-northeast3-b asia-northeast3 UP
+asia-northeast3-c asia-northeast3 UP
+asia-south2-a asia-south2 UP
+asia-south2-b asia-south2 UP
+asia-south2-c asia-south2 UP
+asia-southeast2-a asia-southeast2 UP
+asia-southeast2-b asia-southeast2 UP
+asia-southeast2-c asia-southeast2 UP
+australia-southeast2-a australia-southeast2 UP
+australia-southeast2-b australia-southeast2 UP
+australia-southeast2-c australia-southeast2 UP
+europe-central2-a europe-central2 UP
+europe-central2-b europe-central2 UP
+europe-central2-c europe-central2 UP
+europe-north1-a europe-north1 UP
+europe-north1-b europe-north1 UP
+europe-north1-c europe-north1 UP
+europe-north2-a europe-north2 UP
+europe-north2-b europe-north2 UP
+europe-north2-c europe-north2 UP
+europe-southwest1-a europe-southwest1 UP
+europe-southwest1-b europe-southwest1 UP
+europe-southwest1-c europe-southwest1 UP
+europe-west10-a europe-west10 UP
+europe-west10-b europe-west10 UP
+europe-west10-c europe-west10 UP
+europe-west12-a europe-west12 UP
+europe-west12-b europe-west12 UP
+europe-west12-c europe-west12 UP
+europe-west6-a europe-west6 UP
+europe-west6-b europe-west6 UP
+europe-west6-c europe-west6 UP
+europe-west8-a europe-west8 UP
+europe-west8-b europe-west8 UP
+europe-west8-c europe-west8 UP
+europe-west9-a europe-west9 UP
+europe-west9-b europe-west9 UP
+europe-west9-c europe-west9 UP
+me-central1-a me-central1 UP
+me-central1-b me-central1 UP
+me-central1-c me-central1 UP
+me-central2-a me-central2 UP
+me-central2-b me-central2 UP
+me-central2-c me-central2 UP
+me-west1-a me-west1 UP
+me-west1-b me-west1 UP
+me-west1-c me-west1 UP
+northamerica-northeast1-a northamerica-northeast1 UP
+northamerica-northeast1-b northamerica-northeast1 UP
+northamerica-northeast1-c northamerica-northeast1 UP
+northamerica-northeast2-a northamerica-northeast2 UP
+northamerica-northeast2-b northamerica-northeast2 UP
+northamerica-northeast2-c northamerica-northeast2 UP
+northamerica-south1-a northamerica-south1 UP
+northamerica-south1-b northamerica-south1 UP
+northamerica-south1-c northamerica-south1 UP
+southamerica-west1-a southamerica-west1 UP
+southamerica-west1-b southamerica-west1 UP
+southamerica-west1-c southamerica-west1 UP
+us-east5-a us-east5 UP
+us-east5-b us-east5 UP
+us-east5-c us-east5 UP
+us-south1-a us-south1 UP
+us-south1-b us-south1 UP
+us-south1-c us-south1 UP
+us-west2-a us-west2 UP
+us-west2-b us-west2 UP
+us-west2-c us-west2 UP
+us-west3-a us-west3 UP
+us-west3-b us-west3 UP
+us-west3-c us-west3 UP
+us-west4-a us-west4 UP
+us-west4-b us-west4 UP
+us-west4-c us-west4 UP
+[student-04-e3cbc1a204e5@centos-clean ~]$
+[student-04-e3cbc1a204e5@centos-clean ~]$
+[student-04-e3cbc1a204e5@centos-clean ~]$ gcloud config list
+[compute]
+region = us-central1
+zone = us-central1-c
+[core]
+account = student-04-e3cbc1a204e5@qwiklabs.net
+disable_usage_reporting = True
+project = qwiklabs-gcp-02-1066fac60281
+
+Your active configuration is: [default]
+[student-04-e3cbc1a204e5@centos-clean ~]$ gcloud config set compute/zone us-central1-d
+WARNING: us-central1-d is not a valid zone. Run `gcloud compute zones list` to get all zones.
+Are you sure you wish to set property [compute/zone] to us-central1-d?
+
+Do you want to continue (Y/n)? n
+
+[student-04-e3cbc1a204e5@centos-clean ~]$ gcloud config set compute/zone us-central1-a
+WARNING: Property validation for compute/zone was skipped.
+Updated property [compute/zone].
+[student-04-e3cbc1a204e5@centos-clean ~]$
+[student-04-e3cbc1a204e5@centos-clean ~]$
+[student-04-e3cbc1a204e5@centos-clean ~]$ gcloud config list
+[compute]
+region = us-central1
+zone = us-central1-a
+[core]
+account = student-04-e3cbc1a204e5@qwiklabs.net
+disable_usage_reporting = True
+project = qwiklabs-gcp-02-1066fac60281
+
+Your active configuration is: [default]
+[student-04-e3cbc1a204e5@centos-clean ~]$ cat ~/.config/gcloud/configurations/config_default
+[core]
+account = student-04-e3cbc1a204e5@qwiklabs.net
+
+[compute]
+region = us-central1
+zone = us-central1-a
+
+[student-04-e3cbc1a204e5@centos-clean ~]$
+[student-04-e3cbc1a204e5@centos-clean ~]$
+[student-04-e3cbc1a204e5@centos-clean ~]$ gcloud init --no-launch-browser
+Welcome! This command will take you through the configuration of gcloud.
+
+Settings from your current configuration [default] are:
+compute:
+region: us-central1
+zone: us-central1-a
+core:
+account: student-04-e3cbc1a204e5@qwiklabs.net
+disable_usage_reporting: 'True'
+project: qwiklabs-gcp-02-1066fac60281
+
+Pick configuration to use:
+[1] Re-initialize this configuration [default] with new settings
+[2] Create a new configuration
+Please enter your numeric choice: 2
+
+Enter configuration name. Names start with a lower case letter and contain only lower case letters a-z, digits
+0-9, and hyphens '-': user2
+Your current configuration has been set to: [user2]
+
+You can skip diagnostics next time by using the following flag:
+gcloud init --skip-diagnostics
+
+Network diagnostic detects and fixes local network connection issues.
+Checking network connection...done.  
+Reachability Check passed.
+Network diagnostic passed (1/1 checks passed).
+
+Choose the account you want to use for this configuration.
+To use a federated user account, exit this command and sign in to the gcloud CLI with your login configuration
+file, then run this command again.
+
+Select an account:
+[1] 615979281443-compute@developer.gserviceaccount.com
+[2] student-04-e3cbc1a204e5@qwiklabs.net
+[3] Sign in with a new Google Account
+[4] Skip this step
+Please enter your numeric choice: 3
+
+You are running on a Google Compute Engine virtual machine.
+It is recommended that you use service accounts for authentication.
+
+You can run:
+
+$ gcloud config set account `ACCOUNT`
+
+to switch accounts if necessary.
+
+Your credentials may be visible to others with access to this
+virtual machine. Are you sure you want to authenticate with
+your personal account?
+
+Do you want to continue (Y/n)? y
+
+Go to the following link in your browser, and complete the sign-in prompts:
+
+    https://accounts.google.com/o/oauth2/auth?response_type=code&client_id=32555940559.apps.googleusercontent.com&redirect_uri=https%3A%2F%2Fsdk.cloud.google.com%2Fauthcode.html&scope=openid+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.email+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcloud-platform+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fappengine.admin+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fsqlservice.login+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcompute+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Faccounts.reauth&state=Di5YaEyc1jGJ3GSVPzDJeWUwSGgle0&prompt=consent&token_usage=remote&access_type=offline&code_challenge=3iK3hDZ8xBQ1oZQRw-M5SDaK7UFwvkHmf8yA9jD7-9w&code_challenge_method=S256
+
+Once finished, enter the verification code provided in your browser: 4/0Ab_5qllIUFnkbMJ8NE1fiRO0pWxwVAcrSU9V56rXbcVGQ6bv5UCJdraavvkNt5k_vgPl8w
+You are signed in as: [student-04-e3c9f29a26e9@qwiklabs.net].
+
+Pick cloud project to use:
+[1] qwiklabs-gcp-02-1066fac60281
+[2] qwiklabs-resources
+[3] Enter a project ID
+[4] Create a new project
+Please enter numeric choice or text value (must exactly match list item): 1
+
+Your current project has been set to: [qwiklabs-gcp-02-1066fac60281].
+
+Your project default Compute Engine zone has been set to [us-central1-c].
+You can change it by running [gcloud config set compute/zone NAME].
+
+Your project default Compute Engine region has been set to [us-central1].
+You can change it by running [gcloud config set compute/region NAME].
+
+Created a default .boto configuration file at [/home/student-04-e3cbc1a204e5/.boto]. See this file and
+[https://cloud.google.com/storage/docs/gsutil/commands/config] for more
+information about configuring Google Cloud Storage.
+The Google Cloud CLI is configured and ready to use!
+
+- Commands that require authentication will use student-04-e3c9f29a26e9@qwiklabs.net by default
+- Commands will reference project `qwiklabs-gcp-02-1066fac60281` by default
+- Compute Engine commands will use region `us-central1` by default
+- Compute Engine commands will use zone `us-central1-c` by default
+
+Run `gcloud help config` to learn how to change individual settings
+
+This gcloud configuration is called [user2]. You can create additional configurations if you work with multiple accounts and/or projects.
+Run `gcloud topic configurations` to learn more.
+
+Some things to try next:
+
+- Run `gcloud --help` to see the Cloud Platform services you can interact with. And run `gcloud help COMMAND` to get help on any gcloud command.
+- Run `gcloud topic --help` to learn about advanced features of the CLI like arg files and output formatting
+- Run `gcloud cheat-sheet` to see a roster of go-to `gcloud` commands.
+  [student-04-e3cbc1a204e5@centos-clean ~]$
+  [student-04-e3cbc1a204e5@centos-clean ~]$
+  [student-04-e3cbc1a204e5@centos-clean ~]$
+  [student-04-e3cbc1a204e5@centos-clean ~]$
+  [student-04-e3cbc1a204e5@centos-clean ~]$ gcloud compute instances list
+  NAME ZONE MACHINE_TYPE PREEMPTIBLE INTERNAL_IP EXTERNAL_IP STATUS
+  centos-clean us-central1-c e2-standard-2 10.128.0.2 34.57.159.3 RUNNING
+  lab-1 us-central1-c e2-standard-2 10.128.0.3 34.70.87.34 RUNNING
+  [student-04-e3cbc1a204e5@centos-clean ~]$
+  [student-04-e3cbc1a204e5@centos-clean ~]$ gcloud compute instances create lab-2 --zone us-west1-a --machine-type=e2-standard-2
+  ERROR: (gcloud.compute.instances.create) Could not fetch resource:
+
+* Required 'compute.instances.create' permission for 'projects/qwiklabs-gcp-02-1066fac60281/zones/us-west1-a/instances/lab-2'
+
+[student-04-e3cbc1a204e5@centos-clean ~]$ gcloud config configurations activate default
+Activated [default].
+[student-04-e3cbc1a204e5@centos-clean ~]$ gcloud iam roles list | grep "name:"
+name: roles/accessapproval.approver
+name: roles/accessapproval.configEditor
+name: roles/accessapproval.invalidator
+name: roles/accessapproval.viewer
+name: roles/accesscontextmanager.gcpAccessAdmin
+name: roles/accesscontextmanager.gcpAccessReader
+name: roles/accesscontextmanager.policyAdmin
+name: roles/accesscontextmanager.policyEditor
+name: roles/accesscontextmanager.policyReader
+name: roles/accesscontextmanager.vpcScTroubleshooterViewer
+name: roles/actions.Admin
+name: roles/actions.Viewer
+name: roles/advisorynotifications.admin
+name: roles/advisorynotifications.viewer
+name: roles/aiplatform.admin
+name: roles/aiplatform.batchPredictionServiceAgent
+name: roles/aiplatform.colabEnterpriseAdmin
+name: roles/aiplatform.colabEnterpriseUser
+name: roles/aiplatform.colabServiceAgent
+name: roles/aiplatform.customCodeServiceAgent
+name: roles/aiplatform.entityTypeOwner
+name: roles/aiplatform.expressAdmin
+name: roles/aiplatform.expressUser
+name: roles/aiplatform.extensionCustomCodeServiceAgent
+name: roles/aiplatform.extensionServiceAgent
+name: roles/aiplatform.featurestoreAdmin
+name: roles/aiplatform.featurestoreDataViewer
+name: roles/aiplatform.featurestoreDataWriter
+name: roles/aiplatform.featurestoreInstanceCreator
+name: roles/aiplatform.featurestoreResourceViewer
+name: roles/aiplatform.featurestoreUser
+name: roles/aiplatform.migrator
+name: roles/aiplatform.modelMonitoringServiceAgent
+name: roles/aiplatform.notebookExecutorUser
+name: roles/aiplatform.notebookRuntimeAdmin
+name: roles/aiplatform.notebookRuntimeUser
+name: roles/aiplatform.notebookServiceAgent
+name: roles/aiplatform.onlinePredictionServiceAgent
+name: roles/aiplatform.provisionedThroughputAdmin
+name: roles/aiplatform.ragServiceAgent
+name: roles/aiplatform.rapidevalServiceAgent
+name: roles/aiplatform.reasoningEngineServiceAgent
+name: roles/aiplatform.serviceAgent
+name: roles/aiplatform.tensorboardWebAppUser
+name: roles/aiplatform.tuningServiceAgent
+name: roles/aiplatform.user
+name: roles/aiplatform.viewer
+name: roles/alloydb.admin
+name: roles/alloydb.client
+name: roles/alloydb.databaseUser
+name: roles/alloydb.serviceAgent
+name: roles/alloydb.viewer
+name: roles/analyticshub.admin
+name: roles/analyticshub.listingAdmin
+name: roles/analyticshub.publisher
+name: roles/analyticshub.subscriber
+name: roles/analyticshub.subscriptionOwner
+name: roles/analyticshub.viewer
+name: roles/androidmanagement.user
+name: roles/anthos.serviceAgent
+name: roles/anthosaudit.serviceAgent
+name: roles/anthosconfigmanagement.serviceAgent
+name: roles/anthosidentityservice.serviceAgent
+name: roles/anthospolicycontroller.serviceAgent
+name: roles/anthosservicemesh.serviceAgent
+name: roles/anthossupport.serviceAgent
+name: roles/apigateway.admin
+name: roles/apigateway.serviceAgent
+name: roles/apigateway.viewer
+name: roles/apigateway_management.serviceAgent
+name: roles/apigee.admin
+name: roles/apigee.analyticsAgent
+name: roles/apigee.analyticsEditor
+name: roles/apigee.analyticsViewer
+name: roles/apigee.apiAdminV2
+name: roles/apigee.apiReaderV2
+name: roles/apigee.deploymentInvoker
+name: roles/apigee.developerAdmin
+name: roles/apigee.environmentAdmin
+name: roles/apigee.monetizationAdmin
+name: roles/apigee.portalAdmin
+name: roles/apigee.readOnlyAdmin
+name: roles/apigee.runtimeAgent
+name: roles/apigee.securityAdmin
+name: roles/apigee.securityViewer
+name: roles/apigee.serviceAgent
+name: roles/apigee.spaceConsoleUser
+name: roles/apigee.spaceContentEditor
+name: roles/apigee.spaceContentViewer
+name: roles/apigee.synchronizerManager
+name: roles/apigeeconnect.Admin
+name: roles/apigeeconnect.Agent
+name: roles/apigeeregistry.admin
+name: roles/apigeeregistry.editor
+name: roles/apigeeregistry.viewer
+name: roles/apigeeregistry.worker
+name: roles/apihub.admin
+name: roles/apihub.attributeAdmin
+name: roles/apihub.editor
+name: roles/apihub.pluginAdmin
+name: roles/apihub.provisioningAdmin
+name: roles/apihub.runTimeProjectAttachmentsEditor
+name: roles/apihub.runtimeProjectServiceAgent
+name: roles/apihub.viewer
+name: roles/apim.admin
+name: roles/apim.apiDiscoveryServiceAgent
+name: roles/apim.viewer
+name: roles/appdevelopmentexperience.serviceAgent
+name: roles/appengine.appAdmin
+name: roles/appengine.appCreator
+name: roles/appengine.appViewer
+name: roles/appengine.codeViewer
+name: roles/appengine.debugger
+name: roles/appengine.deployer
+name: roles/appengine.memcacheDataAdmin
+name: roles/appengine.serviceAdmin
+name: roles/appengine.serviceAgent
+name: roles/appengineflex.serviceAgent
+name: roles/apphub.admin
+name: roles/apphub.appManagementViewer
+name: roles/apphub.editor
+name: roles/apphub.viewer
+name: roles/applianceactivation.approver
+name: roles/applianceactivation.client
+name: roles/applianceactivation.troubleshooter
+name: roles/appmetadata.workspaceMarketplaceAppConfigurationAdmin
+name: roles/artifactregistry.admin
+name: roles/artifactregistry.containerRegistryMigrationAdmin
+name: roles/artifactregistry.createOnPushRepoAdmin
+name: roles/artifactregistry.createOnPushWriter
+name: roles/artifactregistry.reader
+name: roles/artifactregistry.repoAdmin
+name: roles/artifactregistry.serviceAgent
+name: roles/artifactregistry.writer
+name: roles/assuredoss.admin
+name: roles/assuredoss.projectAdmin
+name: roles/assuredoss.reader
+name: roles/assuredoss.user
+name: roles/assuredworkloads.admin
+name: roles/assuredworkloads.editor
+name: roles/assuredworkloads.monitoringServiceAgent
+name: roles/assuredworkloads.reader
+name: roles/assuredworkloads.serviceAgent
+name: roles/auditmanager.admin
+name: roles/auditmanager.auditor
+name: roles/auditmanager.ccfAdmin
+name: roles/auditmanager.ccfViewer
+name: roles/auditmanager.serviceAgent
+name: roles/automl.admin
+name: roles/automl.editor
+name: roles/automl.predictor
+name: roles/automl.serviceAgent
+name: roles/automl.viewer
+name: roles/automlrecommendations.admin
+name: roles/automlrecommendations.adminViewer
+name: roles/automlrecommendations.editor
+name: roles/automlrecommendations.serviceAgent
+name: roles/automlrecommendations.viewer
+name: roles/autoscaling.metricsWriter
+name: roles/autoscaling.recommendationsReader
+name: roles/autoscaling.sitesAdmin
+name: roles/autoscaling.stateWriter
+name: roles/axt.admin
+name: roles/backupdr.admin
+name: roles/backupdr.backupConfigViewer
+name: roles/backupdr.backupUser
+name: roles/backupdr.backupvaultAccessor
+name: roles/backupdr.backupvaultAdmin
+name: roles/backupdr.backupvaultLister
+name: roles/backupdr.backupvaultViewer
+name: roles/backupdr.cloudStorageOperator
+name: roles/backupdr.computeEngineOperator
+name: roles/backupdr.managementServerAccessor
+name: roles/backupdr.mountUser
+name: roles/backupdr.restoreUser
+name: roles/backupdr.serviceAgent
+name: roles/backupdr.user
+name: roles/backupdr.userv2
+name: roles/backupdr.viewer
+name: roles/baremetalsolution.admin
+name: roles/baremetalsolution.editor
+name: roles/baremetalsolution.instancesadmin
+name: roles/baremetalsolution.instancesviewer
+name: roles/baremetalsolution.lunsadmin
+name: roles/baremetalsolution.lunsviewer
+name: roles/baremetalsolution.maintenanceeventsadmin
+name: roles/baremetalsolution.maintenanceeventseditor
+name: roles/baremetalsolution.maintenanceeventsviewer
+name: roles/baremetalsolution.networksadmin
+name: roles/baremetalsolution.nfssharesadmin
+name: roles/baremetalsolution.nfsshareseditor
+name: roles/baremetalsolution.nfssharesviewer
+name: roles/baremetalsolution.osimagesviewer
+name: roles/baremetalsolution.procurementsadmin
+name: roles/baremetalsolution.procurementseditor
+name: roles/baremetalsolution.procurementsviewer
+name: roles/baremetalsolution.serviceAgent
+name: roles/baremetalsolution.storageadmin
+name: roles/baremetalsolution.viewer
+name: roles/baremetalsolution.volumesadmin
+name: roles/baremetalsolution.volumeseditor
+name: roles/baremetalsolution.volumesnapshotsadmin
+name: roles/baremetalsolution.volumesnapshotseditor
+name: roles/baremetalsolution.volumesnapshotsviewer
+name: roles/baremetalsolution.volumessviewer
+name: roles/batch.admin
+name: roles/batch.agentReporter
+name: roles/batch.jobsEditor
+name: roles/batch.jobsViewer
+name: roles/batch.resourceAllowancesEditor
+name: roles/batch.resourceAllowancesViewer
+name: roles/batch.serviceAgent
+name: roles/beyondcorp.admin
+name: roles/beyondcorp.clientConnectorAdmin
+name: roles/beyondcorp.clientConnectorServiceUser
+name: roles/beyondcorp.clientConnectorViewer
+name: roles/beyondcorp.partnerServiceDelegateAdmin
+name: roles/beyondcorp.partnerServiceDelegateViewer
+name: roles/beyondcorp.subscriptionAdmin
+name: roles/beyondcorp.subscriptionViewer
+name: roles/beyondcorp.viewer
+name: roles/biglake.admin
+name: roles/biglake.viewer
+name: roles/bigquery.admin
+name: roles/bigquery.connectionAdmin
+name: roles/bigquery.connectionUser
+name: roles/bigquery.dataEditor
+name: roles/bigquery.dataOwner
+name: roles/bigquery.dataViewer
+name: roles/bigquery.filteredDataViewer
+name: roles/bigquery.jobUser
+name: roles/bigquery.metadataViewer
+name: roles/bigquery.objectRefAdmin
+name: roles/bigquery.objectRefReader
+name: roles/bigquery.readSessionUser
+name: roles/bigquery.resourceAdmin
+name: roles/bigquery.resourceEditor
+name: roles/bigquery.resourceViewer
+name: roles/bigquery.studioAdmin
+name: roles/bigquery.studioUser
+name: roles/bigquery.user
+name: roles/bigqueryconnection.serviceAgent
+name: roles/bigquerycontinuousquery.serviceAgent
+name: roles/bigquerydatapolicy.admin
+name: roles/bigquerydatapolicy.maskedReader
+name: roles/bigquerydatapolicy.rawDataReader
+name: roles/bigquerydatapolicy.viewer
+name: roles/bigquerydatatransfer.serviceAgent
+name: roles/bigquerymigration.editor
+name: roles/bigquerymigration.orchestrator
+name: roles/bigquerymigration.translationUser
+name: roles/bigquerymigration.viewer
+name: roles/bigquerymigration.worker
+name: roles/bigqueryomni.serviceAgent
+name: roles/bigqueryspark.serviceAgent
+name: roles/bigtable.admin
+name: roles/bigtable.reader
+name: roles/bigtable.user
+name: roles/bigtable.viewer
+name: roles/billing.admin
+name: roles/billing.carbonViewer
+name: roles/billing.costsManager
+name: roles/billing.creator
+name: roles/billing.projectCostsManager
+name: roles/billing.projectManager
+name: roles/billing.user
+name: roles/billing.viewer
+name: roles/binaryauthorization.attestorsAdmin
+name: roles/binaryauthorization.attestorsEditor
+name: roles/binaryauthorization.attestorsVerifier
+name: roles/binaryauthorization.attestorsViewer
+name: roles/binaryauthorization.policyAdmin
+name: roles/binaryauthorization.policyEditor
+name: roles/binaryauthorization.policyEvaluator
+name: roles/binaryauthorization.policyViewer
+name: roles/binaryauthorization.serviceAgent
+name: roles/blockchainnodeengine.admin
+name: roles/blockchainnodeengine.serviceAgent
+name: roles/blockchainnodeengine.viewer
+name: roles/blockchainvalidatormanager.admin
+name: roles/blockchainvalidatormanager.viewer
+name: roles/browser
+name: roles/capacityplanner.viewer
+name: roles/carestudio.viewer
+name: roles/certificatemanager.editor
+name: roles/certificatemanager.owner
+name: roles/certificatemanager.serviceAgent
+name: roles/certificatemanager.viewer
+name: roles/chat.owner
+name: roles/chat.reader
+name: roles/chronicle.admin
+name: roles/chronicle.dataGovernor
+name: roles/chronicle.editor
+name: roles/chronicle.federationAdmin
+name: roles/chronicle.federationViewer
+name: roles/chronicle.globalDataAccess
+name: roles/chronicle.limitedViewer
+name: roles/chronicle.restrictedDataAccess
+name: roles/chronicle.restrictedDataAccessViewer
+name: roles/chronicle.serviceAgent
+name: roles/chronicle.soarAdmin
+name: roles/chronicle.soarServiceAgent
+name: roles/chronicle.soarThreatManager
+name: roles/chronicle.soarVulnerabilityManager
+name: roles/chronicle.viewer
+name: roles/chroniclesm.admin
+name: roles/chroniclesm.viewer
+name: roles/ciem.serviceAgent
+name: roles/cloud.locationReader
+name: roles/cloudaicompanion.codeRepositoryIndexesAdmin
+name: roles/cloudaicompanion.codeRepositoryIndexesViewer
+name: roles/cloudaicompanion.codeToolsAdmin
+name: roles/cloudaicompanion.codeToolsUser
+name: roles/cloudaicompanion.repositoryGroupsUser
+name: roles/cloudaicompanion.serviceAgent
+name: roles/cloudaicompanion.settingsAdmin
+name: roles/cloudaicompanion.settingsUser
+name: roles/cloudaicompanion.topicAdmin
+name: roles/cloudaicompanion.topicReader
+name: roles/cloudaicompanion.user
+name: roles/cloudasset.effectivePolicyServiceAgent
+name: roles/cloudasset.owner
+name: roles/cloudasset.serviceAgent
+name: roles/cloudasset.viewer
+name: roles/cloudbuild.builds.approver
+name: roles/cloudbuild.builds.builder
+name: roles/cloudbuild.builds.editor
+name: roles/cloudbuild.builds.viewer
+name: roles/cloudbuild.connectionAdmin
+name: roles/cloudbuild.connectionViewer
+name: roles/cloudbuild.integrationsEditor
+name: roles/cloudbuild.integrationsOwner
+name: roles/cloudbuild.integrationsViewer
+name: roles/cloudbuild.loggingServiceAgent
+name: roles/cloudbuild.readTokenAccessor
+name: roles/cloudbuild.serviceAgent
+name: roles/cloudbuild.tokenAccessor
+name: roles/cloudbuild.workerPoolEditor
+name: roles/cloudbuild.workerPoolOwner
+name: roles/cloudbuild.workerPoolUser
+name: roles/cloudbuild.workerPoolViewer
+name: roles/cloudconfig.admin
+name: roles/cloudconfig.serviceAgent
+name: roles/cloudconfig.viewer
+name: roles/cloudcontrolspartner.accessApprovalServiceAgent
+name: roles/cloudcontrolspartner.admin
+name: roles/cloudcontrolspartner.editor
+name: roles/cloudcontrolspartner.ekmServiceAgent
+name: roles/cloudcontrolspartner.inspectabilityReader
+name: roles/cloudcontrolspartner.monitoringReader
+name: roles/cloudcontrolspartner.monitoringServiceAgent
+name: roles/cloudcontrolspartner.reader
+name: roles/cloudcontrolspartner.supportCaseServiceAgent
+name: roles/clouddebugger.agent
+name: roles/clouddebugger.user
+name: roles/clouddeploy.admin
+name: roles/clouddeploy.approver
+name: roles/clouddeploy.customTargetTypeAdmin
+name: roles/clouddeploy.developer
+name: roles/clouddeploy.jobRunner
+name: roles/clouddeploy.operator
+name: roles/clouddeploy.policyAdmin
+name: roles/clouddeploy.policyOverrider
+name: roles/clouddeploy.releaser
+name: roles/clouddeploy.serviceAgent
+name: roles/clouddeploy.viewer
+name: roles/clouddeploymentmanager.serviceAgent
+name: roles/cloudfunctions.admin
+name: roles/cloudfunctions.developer
+name: roles/cloudfunctions.invoker
+name: roles/cloudfunctions.serviceAgent
+name: roles/cloudfunctions.viewer
+name: roles/cloudhub.operator
+name: roles/cloudiot.serviceAgent
+name: roles/cloudjobdiscovery.admin
+name: roles/cloudjobdiscovery.jobsEditor
+name: roles/cloudjobdiscovery.jobsViewer
+name: roles/cloudjobdiscovery.profilesEditor
+name: roles/cloudjobdiscovery.profilesViewer
+name: roles/cloudkms.admin
+name: roles/cloudkms.autokeyAdmin
+name: roles/cloudkms.autokeyUser
+name: roles/cloudkms.cryptoKeyDecrypter
+name: roles/cloudkms.cryptoKeyDecrypterViaDelegation
+name: roles/cloudkms.cryptoKeyEncrypter
+name: roles/cloudkms.cryptoKeyEncrypterDecrypter
+name: roles/cloudkms.cryptoKeyEncrypterDecrypterViaDelegation
+name: roles/cloudkms.cryptoKeyEncrypterViaDelegation
+name: roles/cloudkms.cryptoOperator
+name: roles/cloudkms.ekmConnectionsAdmin
+name: roles/cloudkms.expertRawAesCbc
+name: roles/cloudkms.expertRawAesCtr
+name: roles/cloudkms.expertRawPKCS1
+name: roles/cloudkms.importer
+name: roles/cloudkms.orgServiceAgent
+name: roles/cloudkms.protectedResourcesViewer
+name: roles/cloudkms.publicKeyViewer
+name: roles/cloudkms.serviceAgent
+name: roles/cloudkms.signer
+name: roles/cloudkms.signerVerifier
+name: roles/cloudkms.verifier
+name: roles/cloudkms.viewer
+name: roles/cloudkmskacls.serviceAgent
+name: roles/cloudmigration.inframanager
+name: roles/cloudmigration.storageaccess
+name: roles/cloudmigration.velostrataconnect
+name: roles/cloudoptimization.admin
+name: roles/cloudoptimization.editor
+name: roles/cloudoptimization.serviceAgent
+name: roles/cloudoptimization.viewer
+name: roles/cloudprivatecatalog.consumer
+name: roles/cloudprivatecatalogproducer.admin
+name: roles/cloudprivatecatalogproducer.manager
+name: roles/cloudprivatecatalogproducer.orgAdmin
+name: roles/cloudprofiler.agent
+name: roles/cloudprofiler.user
+name: roles/cloudquotas.admin
+name: roles/cloudquotas.viewer
+name: roles/cloudscheduler.admin
+name: roles/cloudscheduler.jobRunner
+name: roles/cloudscheduler.serviceAgent
+name: roles/cloudscheduler.viewer
+name: roles/cloudsecurityscanner.editor
+name: roles/cloudsecurityscanner.runner
+name: roles/cloudsecurityscanner.viewer
+name: roles/cloudsql.admin
+name: roles/cloudsql.client
+name: roles/cloudsql.editor
+name: roles/cloudsql.instanceUser
+name: roles/cloudsql.schemaViewer
+name: roles/cloudsql.serviceAgent
+name: roles/cloudsql.studioUser
+name: roles/cloudsql.viewer
+name: roles/cloudsupport.admin
+name: roles/cloudsupport.techSupportEditor
+name: roles/cloudsupport.techSupportViewer
+name: roles/cloudsupport.viewer
+name: roles/cloudtasks.admin
+name: roles/cloudtasks.enqueuer
+name: roles/cloudtasks.queueAdmin
+name: roles/cloudtasks.serviceAgent
+name: roles/cloudtasks.taskDeleter
+name: roles/cloudtasks.taskRunner
+name: roles/cloudtasks.viewer
+name: roles/cloudtestservice.directAccessAdmin
+name: roles/cloudtestservice.directAccessViewer
+name: roles/cloudtestservice.testAdmin
+name: roles/cloudtestservice.testViewer
+name: roles/cloudtpu.serviceAgent
+name: roles/cloudtrace.admin
+name: roles/cloudtrace.agent
+name: roles/cloudtrace.user
+name: roles/cloudtranslate.admin
+name: roles/cloudtranslate.editor
+name: roles/cloudtranslate.serviceAgent
+name: roles/cloudtranslate.user
+name: roles/cloudtranslate.viewer
+name: roles/commerceagreementpublishing.admin
+name: roles/commerceagreementpublishing.viewer
+name: roles/commercebusinessenablement.admin
+name: roles/commercebusinessenablement.paymentConfigAdmin
+name: roles/commercebusinessenablement.paymentConfigViewer
+name: roles/commercebusinessenablement.rebatesAdmin
+name: roles/commercebusinessenablement.rebatesViewer
+name: roles/commercebusinessenablement.resellerDiscountAdmin
+name: roles/commercebusinessenablement.resellerDiscountViewer
+name: roles/commercebusinessenablement.viewer
+name: roles/commerceoffercatalog.offersViewer
+name: roles/commerceorggovernance.admin
+name: roles/commerceorggovernance.user
+name: roles/commerceorggovernance.viewer
+name: roles/commercepricemanagement.eventsViewer
+name: roles/commercepricemanagement.privateOffersAdmin
+name: roles/commercepricemanagement.viewer
+name: roles/commerceproducer.admin
+name: roles/commerceproducer.viewer
+name: roles/compliancescanning.serviceAgent
+name: roles/composer.ServiceAgentV2Ext
+name: roles/composer.admin
+name: roles/composer.environmentAndStorageObjectAdmin
+name: roles/composer.environmentAndStorageObjectUser
+name: roles/composer.environmentAndStorageObjectViewer
+name: roles/composer.serviceAgent
+name: roles/composer.sharedVpcAgent
+name: roles/composer.user
+name: roles/composer.worker
+name: roles/compute.admin
+name: roles/compute.futureReservationAdmin
+name: roles/compute.futureReservationUser
+name: roles/compute.futureReservationViewer
+name: roles/compute.imageUser
+name: roles/compute.instanceAdmin
+name: roles/compute.instanceAdmin.v1
+name: roles/compute.instanceGroupManagerServiceAgent
+name: roles/compute.loadBalancerAdmin
+name: roles/compute.loadBalancerServiceUser
+name: roles/compute.networkAdmin
+name: roles/compute.networkUser
+name: roles/compute.networkViewer
+name: roles/compute.orgFirewallPolicyAdmin
+name: roles/compute.orgFirewallPolicyUser
+name: roles/compute.orgSecurityPolicyAdmin
+name: roles/compute.orgSecurityPolicyUser
+name: roles/compute.orgSecurityResourceAdmin
+name: roles/compute.osAdminLogin
+name: roles/compute.osLogin
+name: roles/compute.osLoginExternalUser
+name: roles/compute.packetMirroringAdmin
+name: roles/compute.packetMirroringUser
+name: roles/compute.peerSubnetMigrationAdmin
+name: roles/compute.publicIpAdmin
+name: roles/compute.securityAdmin
+name: roles/compute.serviceAgent
+name: roles/compute.soleTenantViewer
+name: roles/compute.storageAdmin
+name: roles/compute.viewer
+name: roles/compute.xpnAdmin
+name: roles/confidentialcomputing.workloadUser
+name: roles/config.admin
+name: roles/config.agent
+name: roles/config.viewer
+name: roles/configdelivery.configDeliveryAdmin
+name: roles/configdelivery.configDeliveryViewer
+name: roles/configdelivery.resourceBundlePublisher
+name: roles/configdelivery.serviceAgent
+name: roles/connectors.admin
+name: roles/connectors.customConnectorAdmin
+name: roles/connectors.customConnectorViewer
+name: roles/connectors.endpointAttachmentAdmin
+name: roles/connectors.endpointAttachmentViewer
+name: roles/connectors.eventSubscriptionAdmin
+name: roles/connectors.eventSubscriptionViewer
+name: roles/connectors.invoker
+name: roles/connectors.listener
+name: roles/connectors.managedZoneAdmin
+name: roles/connectors.managedZoneViewer
+name: roles/connectors.serviceAgent
+name: roles/connectors.viewer
+name: roles/consumerprocurement.entitlementManager
+name: roles/consumerprocurement.entitlementViewer
+name: roles/consumerprocurement.eventsViewer
+name: roles/consumerprocurement.licensePoolEditor
+name: roles/consumerprocurement.licensePoolViewer
+name: roles/consumerprocurement.orderAdmin
+name: roles/consumerprocurement.orderViewer
+name: roles/consumerprocurement.procurementAdmin
+name: roles/consumerprocurement.procurementViewer
+name: roles/contactcenteraiplatform.admin
+name: roles/contactcenteraiplatform.viewer
+name: roles/contactcenterinsights.admin
+name: roles/contactcenterinsights.authorizedEditor
+name: roles/contactcenterinsights.authorizedViewer
+name: roles/contactcenterinsights.editor
+name: roles/contactcenterinsights.serviceAgent
+name: roles/contactcenterinsights.viewer
+name: roles/container.admin
+name: roles/container.cloudKmsKeyUser
+name: roles/container.clusterAdmin
+name: roles/container.clusterViewer
+name: roles/container.defaultNodeServiceAccount
+name: roles/container.defaultNodeServiceAgent
+name: roles/container.developer
+name: roles/container.hostServiceAgentUser
+name: roles/container.nodeServiceAgent
+name: roles/container.serviceAgent
+name: roles/container.viewer
+name: roles/containeranalysis.ServiceAgent
+name: roles/containeranalysis.admin
+name: roles/containeranalysis.notes.attacher
+name: roles/containeranalysis.notes.editor
+name: roles/containeranalysis.notes.occurrences.viewer
+name: roles/containeranalysis.notes.viewer
+name: roles/containeranalysis.occurrences.editor
+name: roles/containeranalysis.occurrences.viewer
+name: roles/containerregistry.ServiceAgent
+name: roles/containerscanning.ServiceAgent
+name: roles/containersecurity.viewer
+name: roles/containerthreatdetection.serviceAgent
+name: roles/contentwarehouse.admin
+name: roles/contentwarehouse.documentAdmin
+name: roles/contentwarehouse.documentCreator
+name: roles/contentwarehouse.documentEditor
+name: roles/contentwarehouse.documentSchemaViewer
+name: roles/contentwarehouse.documentViewer
+name: roles/contentwarehouse.serviceAgent
+name: roles/databasecenter.admin
+name: roles/databasecenter.viewer
+name: roles/databaseinsights.assistantViewer
+name: roles/databaseinsights.eventsViewer
+name: roles/databaseinsights.monitoringViewer
+name: roles/databaseinsights.operationsAdmin
+name: roles/databaseinsights.recommendationViewer
+name: roles/databaseinsights.viewer
+name: roles/databasesconsole.studioQueryAdmin
+name: roles/databasesconsole.studioQueryUser
+name: roles/datacatalog.admin
+name: roles/datacatalog.categoryAdmin
+name: roles/datacatalog.categoryFineGrainedReader
+name: roles/datacatalog.dataSteward
+name: roles/datacatalog.entryGroupCreator
+name: roles/datacatalog.entryGroupOwner
+name: roles/datacatalog.entryOwner
+name: roles/datacatalog.entryViewer
+name: roles/datacatalog.glossaryOwner
+name: roles/datacatalog.glossaryUser
+name: roles/datacatalog.migrationConfigAdmin
+name: roles/datacatalog.searchAdmin
+name: roles/datacatalog.tagEditor
+name: roles/datacatalog.tagTemplateCreator
+name: roles/datacatalog.tagTemplateOwner
+name: roles/datacatalog.tagTemplateUser
+name: roles/datacatalog.tagTemplateViewer
+name: roles/datacatalog.viewer
+name: roles/dataconnectors.connectorAdmin
+name: roles/dataconnectors.connectorUser
+name: roles/dataconnectors.serviceAgent
+name: roles/dataflow.admin
+name: roles/dataflow.developer
+name: roles/dataflow.serviceAgent
+name: roles/dataflow.viewer
+name: roles/dataflow.worker
+name: roles/dataform.admin
+name: roles/dataform.codeCommenter
+name: roles/dataform.codeCreator
+name: roles/dataform.codeEditor
+name: roles/dataform.codeOwner
+name: roles/dataform.codeViewer
+name: roles/dataform.editor
+name: roles/dataform.serviceAgent
+name: roles/dataform.viewer
+name: roles/datafusion.accessor
+name: roles/datafusion.admin
+name: roles/datafusion.developer
+name: roles/datafusion.operator
+name: roles/datafusion.runner
+name: roles/datafusion.serviceAgent
+name: roles/datafusion.viewer
+name: roles/datalabeling.admin
+name: roles/datalabeling.editor
+name: roles/datalabeling.serviceAgent
+name: roles/datalabeling.viewer
+name: roles/datalineage.admin
+name: roles/datalineage.editor
+name: roles/datalineage.producer
+name: roles/datalineage.viewer
+name: roles/datamigration.admin
+name: roles/datamigration.serviceAgent
+name: roles/datapipelines.admin
+name: roles/datapipelines.invoker
+name: roles/datapipelines.serviceAgent
+name: roles/datapipelines.viewer
+name: roles/dataplex.admin
+name: roles/dataplex.aspectTypeOwner
+name: roles/dataplex.aspectTypeUser
+name: roles/dataplex.bindingAdmin
+name: roles/dataplex.catalogAdmin
+name: roles/dataplex.catalogEditor
+name: roles/dataplex.catalogViewer
+name: roles/dataplex.dataOwner
+name: roles/dataplex.dataReader
+name: roles/dataplex.dataScanAdmin
+name: roles/dataplex.dataScanCreator
+name: roles/dataplex.dataScanDataViewer
+name: roles/dataplex.dataScanEditor
+name: roles/dataplex.dataScanViewer
+name: roles/dataplex.dataWriter
+name: roles/dataplex.developer
+name: roles/dataplex.discoveryBigLakePublishingServiceAgent
+name: roles/dataplex.discoveryPublishingServiceAgent
+name: roles/dataplex.discoveryServiceAgent
+name: roles/dataplex.editor
+name: roles/dataplex.encryptionAdmin
+name: roles/dataplex.entryGroupExporter
+name: roles/dataplex.entryGroupImporter
+name: roles/dataplex.entryGroupOwner
+name: roles/dataplex.entryOwner
+name: roles/dataplex.entryTypeOwner
+name: roles/dataplex.entryTypeUser
+name: roles/dataplex.metadataJobOwner
+name: roles/dataplex.metadataJobViewer
+name: roles/dataplex.metadataReader
+name: roles/dataplex.metadataWriter
+name: roles/dataplex.securityAdmin
+name: roles/dataplex.serviceAgent
+name: roles/dataplex.storageDataOwner
+name: roles/dataplex.storageDataReader
+name: roles/dataplex.storageDataWriter
+name: roles/dataplex.taxonomyAdmin
+name: roles/dataplex.taxonomyViewer
+name: roles/dataplex.viewer
+name: roles/dataprep.projects.user
+name: roles/dataprep.serviceAgent
+name: roles/dataproc.admin
+name: roles/dataproc.editor
+name: roles/dataproc.hubAgent
+name: roles/dataproc.serverlessEditor
+name: roles/dataproc.serverlessNode
+name: roles/dataproc.serverlessViewer
+name: roles/dataproc.serviceAgent
+name: roles/dataproc.viewer
+name: roles/dataproc.worker
+name: roles/dataprocessing.admin
+name: roles/dataprocessing.dataSourceManager
+name: roles/dataprocrm.admin
+name: roles/dataprocrm.nodeServiceAgent
+name: roles/dataprocrm.viewer
+name: roles/datastore.backupSchedulesAdmin
+name: roles/datastore.backupSchedulesViewer
+name: roles/datastore.backupsAdmin
+name: roles/datastore.backupsViewer
+name: roles/datastore.bulkAdmin
+name: roles/datastore.importExportAdmin
+name: roles/datastore.indexAdmin
+name: roles/datastore.keyVisualizerViewer
+name: roles/datastore.owner
+name: roles/datastore.restoreAdmin
+name: roles/datastore.user
+name: roles/datastore.userCredsAdmin
+name: roles/datastore.userCredsViewer
+name: roles/datastore.viewer
+name: roles/datastream.admin
+name: roles/datastream.serviceAgent
+name: roles/datastream.viewer
+name: roles/datastudio.admin
+name: roles/datastudio.contentManager
+name: roles/datastudio.contributor
+name: roles/datastudio.editor
+name: roles/datastudio.manager
+name: roles/datastudio.serviceAgent
+name: roles/datastudio.viewer
+name: roles/datastudio.workspaceViewer
+name: roles/dellemccloudonefs.admin
+name: roles/dellemccloudonefs.user
+name: roles/dellemccloudonefs.viewer
+name: roles/deploymentmanager.editor
+name: roles/deploymentmanager.typeEditor
+name: roles/deploymentmanager.typeViewer
+name: roles/deploymentmanager.viewer
+name: roles/designcenter.admin
+name: roles/designcenter.applicationAdmin
+name: roles/designcenter.applicationEditor
+name: roles/designcenter.applicationViewer
+name: roles/designcenter.serviceAgent
+name: roles/designcenter.user
+name: roles/designcenter.viewer
+name: roles/developerconnect.admin
+name: roles/developerconnect.gitProxyReader
+name: roles/developerconnect.gitProxyUser
+name: roles/developerconnect.oauthAdmin
+name: roles/developerconnect.oauthUser
+name: roles/developerconnect.readTokenAccessor
+name: roles/developerconnect.tokenAccessor
+name: roles/developerconnect.user
+name: roles/developerconnect.viewer
+name: roles/dialogflow.aamAdmin
+name: roles/dialogflow.aamConversationalArchitect
+name: roles/dialogflow.aamDialogDesigner
+name: roles/dialogflow.aamLeadDialogDesigner
+name: roles/dialogflow.aamViewer
+name: roles/dialogflow.admin
+name: roles/dialogflow.agentAssistClient
+name: roles/dialogflow.client
+name: roles/dialogflow.consoleAgentEditor
+name: roles/dialogflow.consoleSimulatorUser
+name: roles/dialogflow.consoleSmartMessagingAllowlistEditor
+name: roles/dialogflow.conversationManager
+name: roles/dialogflow.entityTypeAdmin
+name: roles/dialogflow.environmentEditor
+name: roles/dialogflow.flowEditor
+name: roles/dialogflow.integrationManager
+name: roles/dialogflow.intentAdmin
+name: roles/dialogflow.reader
+name: roles/dialogflow.serviceAgent
+name: roles/dialogflow.testCaseAdmin
+name: roles/dialogflow.webhookAdmin
+name: roles/discoveryengine.admin
+name: roles/discoveryengine.editor
+name: roles/discoveryengine.notebookEditor
+name: roles/discoveryengine.notebookLmOwner
+name: roles/discoveryengine.notebookLmUser
+name: roles/discoveryengine.notebookOwner
+name: roles/discoveryengine.notebookViewer
+name: roles/discoveryengine.serviceAgent
+name: roles/discoveryengine.user
+name: roles/discoveryengine.viewer
+name: roles/dlp.admin
+name: roles/dlp.analyzeRiskTemplatesEditor
+name: roles/dlp.analyzeRiskTemplatesReader
+name: roles/dlp.columnDataProfilesReader
+name: roles/dlp.connectionsAdmin
+name: roles/dlp.connectionsReader
+name: roles/dlp.dataProfilesAdmin
+name: roles/dlp.dataProfilesReader
+name: roles/dlp.deidentifyTemplatesEditor
+name: roles/dlp.deidentifyTemplatesReader
+name: roles/dlp.estimatesAdmin
+name: roles/dlp.fileStoreProfilesAdmin
+name: roles/dlp.fileStoreProfilesReader
+name: roles/dlp.inspectFindingsReader
+name: roles/dlp.inspectTemplatesEditor
+name: roles/dlp.inspectTemplatesReader
+name: roles/dlp.jobTriggersEditor
+name: roles/dlp.jobTriggersReader
+name: roles/dlp.jobsEditor
+name: roles/dlp.jobsReader
+name: roles/dlp.orgdriver
+name: roles/dlp.projectDataProfilesReader
+name: roles/dlp.projectdriver
+name: roles/dlp.reader
+name: roles/dlp.serviceAgent
+name: roles/dlp.storedInfoTypesEditor
+name: roles/dlp.storedInfoTypesReader
+name: roles/dlp.subscriptionsAdmin
+name: roles/dlp.subscriptionsReader
+name: roles/dlp.tableDataProfilesAdmin
+name: roles/dlp.tableDataProfilesReader
+name: roles/dlp.user
+name: roles/dns.admin
+name: roles/dns.peer
+name: roles/dns.reader
+name: roles/dns.serviceAgent
+name: roles/documentai.admin
+name: roles/documentai.apiUser
+name: roles/documentai.editor
+name: roles/documentai.viewer
+name: roles/documentaicore.serviceAgent
+name: roles/domains.admin
+name: roles/domains.viewer
+name: roles/dspm.serviceAgent
+name: roles/earthengine.admin
+name: roles/earthengine.appsPublisher
+name: roles/earthengine.viewer
+name: roles/earthengine.writer
+name: roles/edgecontainer.admin
+name: roles/edgecontainer.clusterServiceAgent
+name: roles/edgecontainer.machineUser
+name: roles/edgecontainer.offlineCredentialUser
+name: roles/edgecontainer.serviceAgent
+name: roles/edgecontainer.viewer
+name: roles/edgenetwork.admin
+name: roles/edgenetwork.viewer
+name: roles/editor
+name: roles/endpoints.serviceAgent
+name: roles/endpointsportal.serviceAgent
+name: roles/enterpriseknowledgegraph.admin
+name: roles/enterpriseknowledgegraph.editor
+name: roles/enterpriseknowledgegraph.serviceAgent
+name: roles/enterpriseknowledgegraph.viewer
+name: roles/enterprisepurchasing.admin
+name: roles/enterprisepurchasing.editor
+name: roles/enterprisepurchasing.viewer
+name: roles/errorreporting.admin
+name: roles/errorreporting.user
+name: roles/errorreporting.viewer
+name: roles/errorreporting.writer
+name: roles/essentialcontacts.admin
+name: roles/essentialcontacts.viewer
+name: roles/eventarc.admin
+name: roles/eventarc.connectionPublisher
+name: roles/eventarc.developer
+name: roles/eventarc.eventReceiver
+name: roles/eventarc.messageBusAdmin
+name: roles/eventarc.messageBusUser
+name: roles/eventarc.publisher
+name: roles/eventarc.serviceAgent
+name: roles/eventarc.viewer
+name: roles/file.editor
+name: roles/file.serviceAgent
+name: roles/file.viewer
+name: roles/financialservices.admin
+name: roles/financialservices.viewer
+name: roles/firebase.admin
+name: roles/firebase.analyticsAdmin
+name: roles/firebase.analyticsViewer
+name: roles/firebase.appDistributionSdkServiceAgent
+name: roles/firebase.developAdmin
+name: roles/firebase.developViewer
+name: roles/firebase.growthAdmin
+name: roles/firebase.growthViewer
+name: roles/firebase.managementServiceAgent
+name: roles/firebase.qualityAdmin
+name: roles/firebase.qualityViewer
+name: roles/firebase.sdkAdminServiceAgent
+name: roles/firebase.sdkProvisioningServiceAgent
+name: roles/firebase.viewer
+name: roles/firebaseabt.admin
+name: roles/firebaseabt.viewer
+name: roles/firebaseappcheck.admin
+name: roles/firebaseappcheck.serviceAgent
+name: roles/firebaseappcheck.tokenVerifier
+name: roles/firebaseappcheck.viewer
+name: roles/firebaseappdistro.admin
+name: roles/firebaseappdistro.viewer
+name: roles/firebaseapphosting.serviceAgent
+name: roles/firebaseauth.admin
+name: roles/firebaseauth.viewer
+name: roles/firebasecloudmessaging.admin
+name: roles/firebasecrash.symbolMappingsAdmin
+name: roles/firebasecrashlytics.admin
+name: roles/firebasecrashlytics.serviceAgent
+name: roles/firebasecrashlytics.viewer
+name: roles/firebasedatabase.admin
+name: roles/firebasedatabase.serviceAgent
+name: roles/firebasedatabase.viewer
+name: roles/firebasedataconnect.admin
+name: roles/firebasedataconnect.dataAdmin
+name: roles/firebasedataconnect.dataViewer
+name: roles/firebasedataconnect.serviceAgent
+name: roles/firebasedataconnect.viewer
+name: roles/firebasedynamiclinks.admin
+name: roles/firebasedynamiclinks.viewer
+name: roles/firebaseextensions.developer
+name: roles/firebaseextensions.viewer
+name: roles/firebaseextensionspublisher.extensionsAdmin
+name: roles/firebaseextensionspublisher.extensionsViewer
+name: roles/firebasehosting.admin
+name: roles/firebasehosting.viewer
+name: roles/firebaseinappmessaging.admin
+name: roles/firebaseinappmessaging.viewer
+name: roles/firebasemessagingcampaigns.admin
+name: roles/firebasemessagingcampaigns.viewer
+name: roles/firebaseml.admin
+name: roles/firebaseml.serviceAgent
+name: roles/firebaseml.viewer
+name: roles/firebasemods.serviceAgent
+name: roles/firebasenotifications.admin
+name: roles/firebasenotifications.viewer
+name: roles/firebaseperformance.admin
+name: roles/firebaseperformance.viewer
+name: roles/firebaserules.admin
+name: roles/firebaserules.firestoreServiceAgent
+name: roles/firebaserules.system
+name: roles/firebaserules.viewer
+name: roles/firebasestorage.admin
+name: roles/firebasestorage.serviceAgent
+name: roles/firebasestorage.viewer
+name: roles/firestore.serviceAgent
+name: roles/firewallinsights.serviceAgent
+name: roles/fleetengine.consumerSdkUser
+name: roles/fleetengine.deliveryAdmin
+name: roles/fleetengine.deliveryConsumer
+name: roles/fleetengine.deliveryFleetReader
+name: roles/fleetengine.deliverySuperUser
+name: roles/fleetengine.deliveryTrustedDriver
+name: roles/fleetengine.deliveryUntrustedDriver
+name: roles/fleetengine.driverSdkUser
+name: roles/fleetengine.ondemandAdmin
+name: roles/fleetengine.serviceAgent
+name: roles/fleetengine.serviceSuperUser
+name: roles/gameservices.serviceAgent
+name: roles/gdchardwaremanagement.admin
+name: roles/gdchardwaremanagement.operator
+name: roles/gdchardwaremanagement.reader
+name: roles/geminicloudassist.user
+name: roles/genomics.admin
+name: roles/genomics.editor
+name: roles/genomics.pipelinesRunner
+name: roles/genomics.serviceAgent
+name: roles/genomics.viewer
+name: roles/gkebackup.admin
+name: roles/gkebackup.backupAdmin
+name: roles/gkebackup.crossProjectServiceAgent
+name: roles/gkebackup.delegatedBackupAdmin
+name: roles/gkebackup.delegatedRestoreAdmin
+name: roles/gkebackup.restoreAdmin
+name: roles/gkebackup.serviceAgent
+name: roles/gkebackup.viewer
+name: roles/gkedataplanemanagement.warpRunServiceAgent
+name: roles/gkehub.admin
+name: roles/gkehub.connect
+name: roles/gkehub.crossProjectServiceAgent
+name: roles/gkehub.editor
+name: roles/gkehub.gatewayAdmin
+name: roles/gkehub.gatewayEditor
+name: roles/gkehub.gatewayReader
+name: roles/gkehub.scopeAdmin
+name: roles/gkehub.scopeEditor
+name: roles/gkehub.scopeEditorProjectLevel
+name: roles/gkehub.scopeViewer
+name: roles/gkehub.scopeViewerProjectLevel
+name: roles/gkehub.serviceAgent
+name: roles/gkehub.viewer
+name: roles/gkemulticloud.admin
+name: roles/gkemulticloud.containerServiceAgent
+name: roles/gkemulticloud.controlPlaneMachineServiceAgent
+name: roles/gkemulticloud.nodePoolMachineServiceAgent
+name: roles/gkemulticloud.serviceAgent
+name: roles/gkemulticloud.telemetryWriter
+name: roles/gkemulticloud.viewer
+name: roles/gkeonprem.admin
+name: roles/gkeonprem.serviceAgent
+name: roles/gkeonprem.viewer
+name: roles/gsuiteaddons.developer
+name: roles/gsuiteaddons.reader
+name: roles/gsuiteaddons.tester
+name: roles/healthcare.annotationEditor
+name: roles/healthcare.annotationReader
+name: roles/healthcare.annotationStoreAdmin
+name: roles/healthcare.annotationStoreViewer
+name: roles/healthcare.attributeDefinitionEditor
+name: roles/healthcare.attributeDefinitionReader
+name: roles/healthcare.consentArtifactAdmin
+name: roles/healthcare.consentArtifactEditor
+name: roles/healthcare.consentArtifactReader
+name: roles/healthcare.consentEditor
+name: roles/healthcare.consentReader
+name: roles/healthcare.consentStoreAdmin
+name: roles/healthcare.consentStoreViewer
+name: roles/healthcare.datasetAdmin
+name: roles/healthcare.datasetViewer
+name: roles/healthcare.dicomEditor
+name: roles/healthcare.dicomStoreAdmin
+name: roles/healthcare.dicomStoreViewer
+name: roles/healthcare.dicomViewer
+name: roles/healthcare.fhirResourceEditor
+name: roles/healthcare.fhirResourceReader
+name: roles/healthcare.fhirStoreAdmin
+name: roles/healthcare.fhirStoreViewer
+name: roles/healthcare.hl7V2Consumer
+name: roles/healthcare.hl7V2Editor
+name: roles/healthcare.hl7V2Ingest
+name: roles/healthcare.hl7V2StoreAdmin
+name: roles/healthcare.hl7V2StoreViewer
+name: roles/healthcare.nlpServiceViewer
+name: roles/healthcare.serviceAgent
+name: roles/healthcare.userDataMappingEditor
+name: roles/healthcare.userDataMappingReader
+name: roles/iam.denyAdmin
+name: roles/iam.denyReviewer
+name: roles/iam.oauthClientAdmin
+name: roles/iam.oauthClientViewer
+name: roles/iam.operationViewer
+name: roles/iam.organizationRoleAdmin
+name: roles/iam.organizationRoleViewer
+name: roles/iam.principalAccessBoundaryAdmin
+name: roles/iam.principalAccessBoundaryUser
+name: roles/iam.principalAccessBoundaryViewer
+name: roles/iam.roleAdmin
+name: roles/iam.roleViewer
+name: roles/iam.securityAdmin
+name: roles/iam.securityReviewer
+name: roles/iam.serviceAccountAdmin
+name: roles/iam.serviceAccountCreator
+name: roles/iam.serviceAccountDeleter
+name: roles/iam.serviceAccountKeyAdmin
+name: roles/iam.serviceAccountOpenIdTokenCreator
+name: roles/iam.serviceAccountTokenCreator
+name: roles/iam.serviceAccountUser
+name: roles/iam.serviceAccountViewer
+name: roles/iam.workforcePoolAdmin
+name: roles/iam.workforcePoolEditor
+name: roles/iam.workforcePoolViewer
+name: roles/iam.workloadIdentityPoolAdmin
+name: roles/iam.workloadIdentityPoolViewer
+name: roles/iam.workloadIdentityUser
+name: roles/iam.workspacePoolAdmin
+name: roles/iap.admin
+name: roles/iap.httpsResourceAccessor
+name: roles/iap.remediatorUser
+name: roles/iap.settingsAdmin
+name: roles/iap.tunnelDestGroupEditor
+name: roles/iap.tunnelDestGroupViewer
+name: roles/iap.tunnelResourceAccessor
+name: roles/identityplatform.admin
+name: roles/identityplatform.viewer
+name: roles/identitytoolkit.admin
+name: roles/identitytoolkit.serviceAgent
+name: roles/identitytoolkit.viewer
+name: roles/ids.admin
+name: roles/ids.viewer
+name: roles/integrations.apigeeIntegrationAdminRole
+name: roles/integrations.apigeeIntegrationDeployerRole
+name: roles/integrations.apigeeIntegrationEditorRole
+name: roles/integrations.apigeeIntegrationInvokerRole
+name: roles/integrations.apigeeIntegrationsViewer
+name: roles/integrations.apigeeSuspensionResolver
+name: roles/integrations.certificateViewer
+name: roles/integrations.integrationAdmin
+name: roles/integrations.integrationDeployer
+name: roles/integrations.integrationEditor
+name: roles/integrations.integrationInvoker
+name: roles/integrations.integrationViewer
+name: roles/integrations.securityIntegrationAdmin
+name: roles/integrations.serviceAgent
+name: roles/integrations.sfdcInstanceAdmin
+name: roles/integrations.sfdcInstanceEditor
+name: roles/integrations.sfdcInstanceViewer
+name: roles/integrations.suspensionResolver
+name: roles/issuerswitch.accountManagerAdmin
+name: roles/issuerswitch.accountManagerTransactionsAdmin
+name: roles/issuerswitch.accountManagerTransactionsViewer
+name: roles/issuerswitch.admin
+name: roles/issuerswitch.issuerParticipantsAdmin
+name: roles/issuerswitch.resolutionsAdmin
+name: roles/issuerswitch.rulesAdmin
+name: roles/issuerswitch.rulesViewer
+name: roles/issuerswitch.transactionsViewer
+name: roles/krmapihosting.admin
+name: roles/krmapihosting.anthosApiEndpointServiceAgent
+name: roles/krmapihosting.serviceAgent
+name: roles/krmapihosting.viewer
+name: roles/kubernetesmetadata.publisher
+name: roles/kuberun.eventsControlPlaneServiceAgent
+name: roles/kuberun.eventsDataPlaneServiceAgent
+name: roles/licensemanager.admin
+name: roles/licensemanager.viewer
+name: roles/lifesciences.admin
+name: roles/lifesciences.editor
+name: roles/lifesciences.serviceAgent
+name: roles/lifesciences.viewer
+name: roles/lifesciences.workflowsRunner
+name: roles/livestream.editor
+name: roles/livestream.serviceAgent
+name: roles/livestream.viewer
+name: roles/logging.admin
+name: roles/logging.bucketWriter
+name: roles/logging.configWriter
+name: roles/logging.fieldAccessor
+name: roles/logging.linkViewer
+name: roles/logging.logWriter
+name: roles/logging.privateLogViewer
+name: roles/logging.serviceAgent
+name: roles/logging.sqlAlertWriter
+name: roles/logging.viewAccessor
+name: roles/logging.viewer
+name: roles/looker.admin
+name: roles/looker.instanceUser
+name: roles/looker.serviceAgent
+name: roles/looker.viewer
+name: roles/lookerstudio.lookerAdmin
+name: roles/lookerstudio.proManager
+name: roles/lustre.admin
+name: roles/lustre.viewer
+name: roles/maintenance.viewer
+name: roles/managedflink.admin
+name: roles/managedflink.developer
+name: roles/managedflink.serviceAgent
+name: roles/managedflink.viewer
+name: roles/managedidentities.admin
+name: roles/managedidentities.backupAdmin
+name: roles/managedidentities.backupViewer
+name: roles/managedidentities.domainAdmin
+name: roles/managedidentities.domainJoin
+name: roles/managedidentities.peeringAdmin
+name: roles/managedidentities.peeringViewer
+name: roles/managedidentities.serviceAgent
+name: roles/managedidentities.viewer
+name: roles/managedkafka.admin
+name: roles/managedkafka.client
+name: roles/managedkafka.clusterEditor
+name: roles/managedkafka.connectClusterEditor
+name: roles/managedkafka.connectorEditor
+name: roles/managedkafka.consumerGroupEditor
+name: roles/managedkafka.serviceAgent
+name: roles/managedkafka.topicEditor
+name: roles/managedkafka.viewer
+name: roles/mandiant.attackSurfaceManagementEditor
+name: roles/mandiant.attackSurfaceManagementViewer
+name: roles/mandiant.digitalThreatMonitoringEditor
+name: roles/mandiant.digitalThreatMonitoringViewer
+name: roles/mandiant.expertiseOnDemandEditor
+name: roles/mandiant.expertiseOnDemandViewer
+name: roles/mandiant.threatIntelEditor
+name: roles/mandiant.threatIntelViewer
+name: roles/mandiant.validationEditor
+name: roles/mandiant.validationViewer
+name: roles/mapsadmin.admin
+name: roles/mapsadmin.viewer
+name: roles/mapsanalytics.mobilitySolutionsOverageViewer
+name: roles/mapsanalytics.viewer
+name: roles/mapsplatformdatasets.admin
+name: roles/mapsplatformdatasets.viewer
+name: roles/marketplacesolutions.admin
+name: roles/marketplacesolutions.editor
+name: roles/marketplacesolutions.viewer
+name: roles/mediaasset.serviceAgent
+name: roles/memcache.admin
+name: roles/memcache.editor
+name: roles/memcache.serviceAgent
+name: roles/memcache.viewer
+name: roles/memorystore.admin
+name: roles/memorystore.dbConnectionUser
+name: roles/memorystore.serviceAgent
+name: roles/memorystore.viewer
+name: roles/meshconfig.admin
+name: roles/meshconfig.serviceAgent
+name: roles/meshconfig.viewer
+name: roles/meshcontrolplane.serviceAgent
+name: roles/meshdataplane.serviceAgent
+name: roles/metastore.admin
+name: roles/metastore.editor
+name: roles/metastore.federationAccessor
+name: roles/metastore.metadataEditor
+name: roles/metastore.metadataMutateAdmin
+name: roles/metastore.metadataOperator
+name: roles/metastore.metadataOwner
+name: roles/metastore.metadataQueryAdmin
+name: roles/metastore.metadataUser
+name: roles/metastore.metadataViewer
+name: roles/metastore.migrationAdmin
+name: roles/metastore.serviceAgent
+name: roles/metastore.user
+name: roles/migrationcenter.admin
+name: roles/migrationcenter.discoveryClient
+name: roles/migrationcenter.discoveryClientRegistrator
+name: roles/migrationcenter.serviceAgent
+name: roles/migrationcenter.viewer
+name: roles/ml.admin
+name: roles/ml.developer
+name: roles/ml.jobOwner
+name: roles/ml.modelOwner
+name: roles/ml.modelUser
+name: roles/ml.operationOwner
+name: roles/ml.serviceAgent
+name: roles/ml.viewer
+name: roles/modelarmor.admin
+name: roles/modelarmor.calloutUser
+name: roles/modelarmor.floorSettingsAdmin
+name: roles/modelarmor.floorSettingsViewer
+name: roles/modelarmor.serviceAgent
+name: roles/modelarmor.user
+name: roles/modelarmor.viewer
+name: roles/monitoring.admin
+name: roles/monitoring.alertPolicyEditor
+name: roles/monitoring.alertPolicyViewer
+name: roles/monitoring.cloudConsoleIncidentEditor
+name: roles/monitoring.cloudConsoleIncidentViewer
+name: roles/monitoring.dashboardEditor
+name: roles/monitoring.dashboardViewer
+name: roles/monitoring.editor
+name: roles/monitoring.metricWriter
+name: roles/monitoring.metricsScopesAdmin
+name: roles/monitoring.metricsScopesViewer
+name: roles/monitoring.notificationChannelEditor
+name: roles/monitoring.notificationChannelViewer
+name: roles/monitoring.notificationServiceAgent
+name: roles/monitoring.servicesEditor
+name: roles/monitoring.servicesViewer
+name: roles/monitoring.snoozeEditor
+name: roles/monitoring.snoozeViewer
+name: roles/monitoring.uptimeCheckConfigEditor
+name: roles/monitoring.uptimeCheckConfigViewer
+name: roles/monitoring.viewer
+name: roles/multiclusteringress.serviceAgent
+name: roles/multiclustermetering.serviceAgent
+name: roles/multiclusterservicediscovery.serviceAgent
+name: roles/nestconsole.homeDeveloperAdmin
+name: roles/nestconsole.homeDeveloperEditor
+name: roles/nestconsole.homeDeveloperViewer
+name: roles/netapp.admin
+name: roles/netapp.viewer
+name: roles/netappcloudvolumes.admin
+name: roles/netappcloudvolumes.viewer
+name: roles/networkactions.serviceAgent
+name: roles/networkconnectivity.consumerNetworkAdmin
+name: roles/networkconnectivity.groupUser
+name: roles/networkconnectivity.hubAdmin
+name: roles/networkconnectivity.hubViewer
+name: roles/networkconnectivity.regionalEndpointAdmin
+name: roles/networkconnectivity.regionalEndpointViewer
+name: roles/networkconnectivity.serviceAgent
+name: roles/networkconnectivity.serviceClassUser
+name: roles/networkconnectivity.serviceProducerAdmin
+name: roles/networkconnectivity.spokeAdmin
+name: roles/networkmanagement.admin
+name: roles/networkmanagement.serviceAgent
+name: roles/networkmanagement.viewer
+name: roles/networksecurity.interceptDeploymentAdmin
+name: roles/networksecurity.interceptDeploymentUser
+name: roles/networksecurity.interceptDeploymentViewer
+name: roles/networksecurity.interceptEndpointAdmin
+name: roles/networksecurity.interceptEndpointUser
+name: roles/networksecurity.interceptEndpointViewer
+name: roles/networksecurity.mirroringDeploymentAdmin
+name: roles/networksecurity.mirroringDeploymentExternalUser
+name: roles/networksecurity.mirroringDeploymentUser
+name: roles/networksecurity.mirroringDeploymentViewer
+name: roles/networksecurity.mirroringEndpointAdmin
+name: roles/networksecurity.mirroringEndpointUser
+name: roles/networksecurity.mirroringEndpointViewer
+name: roles/networksecurity.securityProfileAdmin
+name: roles/networkservices.serviceExtensionsAdmin
+name: roles/networkservices.serviceExtensionsViewer
+name: roles/notebooks.admin
+name: roles/notebooks.legacyAdmin
+name: roles/notebooks.legacyViewer
+name: roles/notebooks.runner
+name: roles/notebooks.serviceAgent
+name: roles/notebooks.viewer
+name: roles/oauthconfig.editor
+name: roles/oauthconfig.viewer
+name: roles/observability.admin
+name: roles/observability.analyticsUser
+name: roles/observability.editor
+name: roles/observability.viewer
+name: roles/oci.serviceAgent
+name: roles/ondemandscanning.admin
+name: roles/ondemandscanning.serviceAgent
+name: roles/opsconfigmonitoring.resourceMetadata.viewer
+name: roles/opsconfigmonitoring.resourceMetadata.writer
+name: roles/oracledatabase.admin
+name: roles/oracledatabase.autonomousDatabaseAdmin
+name: roles/oracledatabase.autonomousDatabaseViewer
+name: roles/oracledatabase.cloudExadataInfrastructureAdmin
+name: roles/oracledatabase.cloudExadataInfrastructureUser
+name: roles/oracledatabase.cloudExadataInfrastructureViewer
+name: roles/oracledatabase.cloudVmClusterAdmin
+name: roles/oracledatabase.cloudVmClusterViewer
+name: roles/oracledatabase.viewer
+name: roles/orgpolicy.policyAdmin
+name: roles/orgpolicy.policyViewer
+name: roles/osconfig.admin
+name: roles/osconfig.guestPolicyAdmin
+name: roles/osconfig.guestPolicyEditor
+name: roles/osconfig.guestPolicyViewer
+name: roles/osconfig.instanceOSPoliciesComplianceViewer
+name: roles/osconfig.inventoryViewer
+name: roles/osconfig.osPolicyAssignmentAdmin
+name: roles/osconfig.osPolicyAssignmentEditor
+name: roles/osconfig.osPolicyAssignmentReportViewer
+name: roles/osconfig.osPolicyAssignmentViewer
+name: roles/osconfig.patchDeploymentAdmin
+name: roles/osconfig.patchDeploymentViewer
+name: roles/osconfig.patchJobExecutor
+name: roles/osconfig.patchJobViewer
+name: roles/osconfig.policyOrchestratorAdmin
+name: roles/osconfig.policyOrchestratorViewer
+name: roles/osconfig.projectFeatureSettingsEditor
+name: roles/osconfig.projectFeatureSettingsViewer
+name: roles/osconfig.rolloutServiceAgent
+name: roles/osconfig.serviceAgent
+name: roles/osconfig.upgradeReportViewer
+name: roles/osconfig.viewer
+name: roles/osconfig.vulnerabilityReportViewer
+name: roles/owner
+name: roles/parallelstore.admin
+name: roles/parallelstore.serviceAgent
+name: roles/parallelstore.viewer
+name: roles/parametermanager.admin
+name: roles/parametermanager.parameterAccessor
+name: roles/parametermanager.parameterVersionAdder
+name: roles/parametermanager.parameterVersionManager
+name: roles/parametermanager.parameterViewer
+name: roles/paymentsresellersubscription.partnerAdmin
+name: roles/paymentsresellersubscription.partnerViewer
+name: roles/paymentsresellersubscription.productViewer
+name: roles/paymentsresellersubscription.promotionViewer
+name: roles/paymentsresellersubscription.subscriptionEditor
+name: roles/paymentsresellersubscription.subscriptionViewer
+name: roles/paymentsresellersubscription.userSessionEditor
+name: roles/policyanalyzer.activityAnalysisViewer
+name: roles/policyremediatormanager.policyRemediatorAdmin
+name: roles/policyremediatormanager.policyRemediatorReader
+name: roles/policysimulator.admin
+name: roles/policysimulator.orgPolicyAdmin
+name: roles/privateca.admin
+name: roles/privateca.auditor
+name: roles/privateca.caManager
+name: roles/privateca.certificateManager
+name: roles/privateca.certificateRequester
+name: roles/privateca.poolReader
+name: roles/privateca.templateUser
+name: roles/privateca.workloadCertificateRequester
+name: roles/privilegedaccessmanager.admin
+name: roles/privilegedaccessmanager.folderServiceAgent
+name: roles/privilegedaccessmanager.organizationServiceAgent
+name: roles/privilegedaccessmanager.projectServiceAgent
+name: roles/privilegedaccessmanager.serviceAgent
+name: roles/privilegedaccessmanager.viewer
+name: roles/progressiverollout.serviceAgent
+name: roles/proximitybeacon.attachmentEditor
+name: roles/proximitybeacon.attachmentPublisher
+name: roles/proximitybeacon.attachmentViewer
+name: roles/proximitybeacon.beaconEditor
+name: roles/publicca.externalAccountKeyCreator
+name: roles/pubsub.admin
+name: roles/pubsub.editor
+name: roles/pubsub.publisher
+name: roles/pubsub.serviceAgent
+name: roles/pubsub.subscriber
+name: roles/pubsub.viewer
+name: roles/pubsublite.admin
+name: roles/pubsublite.editor
+name: roles/pubsublite.publisher
+name: roles/pubsublite.serviceAgent
+name: roles/pubsublite.subscriber
+name: roles/pubsublite.viewer
+name: roles/rapidmigrationassessment.serviceAgent
+name: roles/readerrevenuesubscriptionlinking.admin
+name: roles/readerrevenuesubscriptionlinking.entitlementsViewer
+name: roles/readerrevenuesubscriptionlinking.viewer
+name: roles/recaptchaenterprise.admin
+name: roles/recaptchaenterprise.agent
+name: roles/recaptchaenterprise.viewer
+name: roles/recommender.alloydbAdmin
+name: roles/recommender.alloydbViewer
+name: roles/recommender.bigQueryCapacityCommitmentsAdmin
+name: roles/recommender.bigQueryCapacityCommitmentsBillingAccountAdmin
+name: roles/recommender.bigQueryCapacityCommitmentsBillingAccountViewer
+name: roles/recommender.bigQueryCapacityCommitmentsProjectAdmin
+name: roles/recommender.bigQueryCapacityCommitmentsProjectViewer
+name: roles/recommender.bigQueryCapacityCommitmentsViewer
+name: roles/recommender.bigqueryMaterializedViewAdmin
+name: roles/recommender.bigqueryMaterializedViewViewer
+name: roles/recommender.bigqueryPartitionClusterAdmin
+name: roles/recommender.bigqueryPartitionClusterViewer
+name: roles/recommender.bigtableClusterPerformanceAdmin
+name: roles/recommender.bigtableClusterPerformanceViewer
+name: roles/recommender.billingAccountCudAdmin
+name: roles/recommender.billingAccountCudViewer
+name: roles/recommender.cloudAssetInsightsAdmin
+name: roles/recommender.cloudAssetInsightsViewer
+name: roles/recommender.cloudCostRecommendationAdmin
+name: roles/recommender.cloudCostRecommendationViewer
+name: roles/recommender.cloudDeprecationRecommendationAdmin
+name: roles/recommender.cloudDeprecationRecommendationViewer
+name: roles/recommender.cloudManageabilityRecommendationAdmin
+name: roles/recommender.cloudManageabilityRecommendationViewer
+name: roles/recommender.cloudPerformanceRecommendationAdmin
+name: roles/recommender.cloudPerformanceRecommendationViewer
+name: roles/recommender.cloudReliabilityRecommendationAdmin
+name: roles/recommender.cloudReliabilityRecommendationViewer
+name: roles/recommender.cloudSecurityRecommendationAdmin
+name: roles/recommender.cloudSecurityRecommendationViewer
+name: roles/recommender.cloudsqlAdmin
+name: roles/recommender.cloudsqlViewer
+name: roles/recommender.computeAdmin
+name: roles/recommender.computeViewer
+name: roles/recommender.containerDiagnosisAdmin
+name: roles/recommender.containerDiagnosisViewer
+name: roles/recommender.dataflowDiagnosticsAdmin
+name: roles/recommender.dataflowDiagnosticsViewer
+name: roles/recommender.errorReportingAdmin
+name: roles/recommender.errorReportingViewer
+name: roles/recommender.exporter
+name: roles/recommender.firestoredatabasereliabilityAdmin
+name: roles/recommender.firestoredatabasereliabilityViewer
+name: roles/recommender.firewallAdmin
+name: roles/recommender.firewallViewer
+name: roles/recommender.gmpAdmin
+name: roles/recommender.gmpViewer
+name: roles/recommender.iamAdmin
+name: roles/recommender.iamViewer
+name: roles/recommender.iampolicychangeriskAdmin
+name: roles/recommender.iampolicychangeriskViewer
+name: roles/recommender.memorystoremanageabilityAdmin
+name: roles/recommender.memorystoremanageabilityViewer
+name: roles/recommender.memorystoreperformanceAdmin
+name: roles/recommender.memorystoreperformanceViewer
+name: roles/recommender.memorystorereliabilityAdmin
+name: roles/recommender.memorystorereliabilityViewer
+name: roles/recommender.networkAnalyzerAdmin
+name: roles/recommender.networkAnalyzerCloudSqlAdmin
+name: roles/recommender.networkAnalyzerCloudSqlViewer
+name: roles/recommender.networkAnalyzerDynamicRouteAdmin
+name: roles/recommender.networkAnalyzerDynamicRouteViewer
+name: roles/recommender.networkAnalyzerGkeConnectivityAdmin
+name: roles/recommender.networkAnalyzerGkeConnectivityViewer
+name: roles/recommender.networkAnalyzerGkeIpAddressAdmin
+name: roles/recommender.networkAnalyzerGkeIpAddressViewer
+name: roles/recommender.networkAnalyzerGkeServiceAccountAdmin
+name: roles/recommender.networkAnalyzerGkeServiceAccountViewer
+name: roles/recommender.networkAnalyzerIpAddressAdmin
+name: roles/recommender.networkAnalyzerIpAddressViewer
+name: roles/recommender.networkAnalyzerLoadBalancerAdmin
+name: roles/recommender.networkAnalyzerLoadBalancerViewer
+name: roles/recommender.networkAnalyzerViewer
+name: roles/recommender.networkAnalyzerVpcConnectivityAdmin
+name: roles/recommender.networkAnalyzerVpcConnectivityViewer
+name: roles/recommender.orgPolicyAdmin
+name: roles/recommender.orgPolicyViewer
+name: roles/recommender.productSuggestionAdmin
+name: roles/recommender.productSuggestionViewer
+name: roles/recommender.projectCudAdmin
+name: roles/recommender.projectCudViewer
+name: roles/recommender.projectUtilAdmin
+name: roles/recommender.projectUtilViewer
+name: roles/recommender.recentChangeConfigAdmin
+name: roles/recommender.recentchangeriskAdmin
+name: roles/recommender.recentchangeriskViewer
+name: roles/recommender.serviceLimitAdmin
+name: roles/recommender.serviceLimitViewer
+name: roles/recommender.serviceaccntchangeriskAdmin
+name: roles/recommender.serviceaccntchangeriskViewer
+name: roles/recommender.spannerAdmin
+name: roles/recommender.spannerViewer
+name: roles/recommender.ucsAdmin
+name: roles/recommender.ucsViewer
+name: roles/recommender.viewer
+name: roles/redis.admin
+name: roles/redis.dbConnectionUser
+name: roles/redis.editor
+name: roles/redis.serviceAgent
+name: roles/redis.viewer
+name: roles/redisenterprisecloud.admin
+name: roles/redisenterprisecloud.viewer
+name: roles/remotebuildexecution.actionCacheWriter
+name: roles/remotebuildexecution.artifactAdmin
+name: roles/remotebuildexecution.artifactCreator
+name: roles/remotebuildexecution.artifactViewer
+name: roles/remotebuildexecution.configurationAdmin
+name: roles/remotebuildexecution.configurationViewer
+name: roles/remotebuildexecution.logstreamWriter
+name: roles/remotebuildexecution.reservationAdmin
+name: roles/remotebuildexecution.serviceAgent
+name: roles/remotebuildexecution.worker
+name: roles/remotingcloud.serviceAgent
+name: roles/resourcemanager.folderAdmin
+name: roles/resourcemanager.folderCreator
+name: roles/resourcemanager.folderEditor
+name: roles/resourcemanager.folderIamAdmin
+name: roles/resourcemanager.folderMover
+name: roles/resourcemanager.folderViewer
+name: roles/resourcemanager.lienModifier
+name: roles/resourcemanager.organizationAdmin
+name: roles/resourcemanager.organizationViewer
+name: roles/resourcemanager.projectCreator
+name: roles/resourcemanager.projectDeleter
+name: roles/resourcemanager.projectIamAdmin
+name: roles/resourcemanager.projectMover
+name: roles/resourcemanager.tagAdmin
+name: roles/resourcemanager.tagHoldAdmin
+name: roles/resourcemanager.tagUser
+name: roles/resourcemanager.tagViewer
+name: roles/resourcesettings.admin
+name: roles/resourcesettings.viewer
+name: roles/retail.admin
+name: roles/retail.editor
+name: roles/retail.merchantApprover
+name: roles/retail.merchantCreator
+name: roles/retail.serviceAgent
+name: roles/retail.viewer
+name: roles/riscconfigs.admin
+name: roles/riscconfigs.viewer
+name: roles/riskmanager.admin
+name: roles/riskmanager.editor
+name: roles/riskmanager.reviewer
+name: roles/riskmanager.serviceAgent
+name: roles/riskmanager.viewer
+name: roles/rma.admin
+name: roles/rma.runner
+name: roles/rma.viewer
+name: roles/routeoptimization.editor
+name: roles/routeoptimization.serviceAgent
+name: roles/routeoptimization.viewer
+name: roles/run.admin
+name: roles/run.builder
+name: roles/run.developer
+name: roles/run.invoker
+name: roles/run.jobsExecutor
+name: roles/run.jobsExecutorWithOverrides
+name: roles/run.serviceAgent
+name: roles/run.servicesInvoker
+name: roles/run.sourceDeveloper
+name: roles/run.sourceViewer
+name: roles/run.viewer
+name: roles/runapps.developer
+name: roles/runapps.operator
+name: roles/runapps.serviceAgent
+name: roles/runapps.viewer
+name: roles/runtimeconfig.admin
+name: roles/saasservicemgmt.admin
+name: roles/saasservicemgmt.serviceAgent
+name: roles/saasservicemgmt.viewer
+name: roles/seclm.serviceAgent
+name: roles/secretmanager.admin
+name: roles/secretmanager.secretAccessor
+name: roles/secretmanager.secretVersionAdder
+name: roles/secretmanager.secretVersionManager
+name: roles/secretmanager.viewer
+name: roles/securedlandingzone.bqdwOrgRemediator
+name: roles/securedlandingzone.bqdwProjectRemediator
+name: roles/securedlandingzone.overwatchActivator
+name: roles/securedlandingzone.overwatchAdmin
+name: roles/securedlandingzone.overwatchViewer
+name: roles/securedlandingzone.serviceAgent
+name: roles/securesourcemanager.admin
+name: roles/securesourcemanager.instanceAccessor
+name: roles/securesourcemanager.instanceManager
+name: roles/securesourcemanager.instanceOwner
+name: roles/securesourcemanager.instanceRepositoryCreator
+name: roles/securesourcemanager.repoAdmin
+name: roles/securesourcemanager.repoCreator
+name: roles/securesourcemanager.repoPullRequestApprover
+name: roles/securesourcemanager.repoReader
+name: roles/securesourcemanager.repoWriter
+name: roles/securesourcemanager.serviceAgent
+name: roles/securesourcemanager.sshKeyUser
+name: roles/securitycenter.admin
+name: roles/securitycenter.adminEditor
+name: roles/securitycenter.adminViewer
+name: roles/securitycenter.assetSecurityMarksWriter
+name: roles/securitycenter.assetsDiscoveryRunner
+name: roles/securitycenter.assetsViewer
+name: roles/securitycenter.attackPathsViewer
+name: roles/securitycenter.attackSurfaceManagementScannerServiceAgent
+name: roles/securitycenter.automationServiceAgent
+name: roles/securitycenter.bigQueryExportsEditor
+name: roles/securitycenter.bigQueryExportsViewer
+name: roles/securitycenter.complianceReportsViewer
+name: roles/securitycenter.complianceSnapshotsViewer
+name: roles/securitycenter.controlServiceAgent
+name: roles/securitycenter.externalSystemsEditor
+name: roles/securitycenter.findingSecurityMarksWriter
+name: roles/securitycenter.findingsBulkMuteEditor
+name: roles/securitycenter.findingsEditor
+name: roles/securitycenter.findingsMuteSetter
+name: roles/securitycenter.findingsStateSetter
+name: roles/securitycenter.findingsViewer
+name: roles/securitycenter.findingsWorkflowStateSetter
+name: roles/securitycenter.integrationExecutorServiceAgent
+name: roles/securitycenter.issuesEditor
+name: roles/securitycenter.issuesViewer
+name: roles/securitycenter.muteConfigsEditor
+name: roles/securitycenter.muteConfigsViewer
+name: roles/securitycenter.notificationConfigEditor
+name: roles/securitycenter.notificationConfigViewer
+name: roles/securitycenter.notificationServiceAgent
+name: roles/securitycenter.resourceValueConfigsEditor
+name: roles/securitycenter.resourceValueConfigsViewer
+name: roles/securitycenter.securityHealthAnalyticsCustomModulesTester
+name: roles/securitycenter.securityHealthAnalyticsServiceAgent
+name: roles/securitycenter.securityResponseServiceAgent
+name: roles/securitycenter.serviceAgent
+name: roles/securitycenter.settingsAdmin
+name: roles/securitycenter.settingsEditor
+name: roles/securitycenter.settingsViewer
+name: roles/securitycenter.simulationsViewer
+name: roles/securitycenter.sourcesAdmin
+name: roles/securitycenter.sourcesEditor
+name: roles/securitycenter.sourcesViewer
+name: roles/securitycenter.valuedResourcesViewer
+name: roles/securitycentermanagement.admin
+name: roles/securitycentermanagement.customModulesEditor
+name: roles/securitycentermanagement.customModulesViewer
+name: roles/securitycentermanagement.etdCustomModulesEditor
+name: roles/securitycentermanagement.etdCustomModulesViewer
+name: roles/securitycentermanagement.securityCenterServicesEditor
+name: roles/securitycentermanagement.securityCenterServicesViewer
+name: roles/securitycentermanagement.settingsEditor
+name: roles/securitycentermanagement.settingsViewer
+name: roles/securitycentermanagement.shaCustomModulesEditor
+name: roles/securitycentermanagement.shaCustomModulesViewer
+name: roles/securitycentermanagement.viewer
+name: roles/securityposture.admin
+name: roles/securityposture.postureDeployer
+name: roles/securityposture.postureDeploymentsViewer
+name: roles/securityposture.postureEditor
+name: roles/securityposture.postureViewer
+name: roles/securityposture.reportCreator
+name: roles/securityposture.viewer
+name: roles/serverless.serviceAgent
+name: roles/servicebroker.admin
+name: roles/servicebroker.operator
+name: roles/serviceconsumermanagement.tenancyUnitsAdmin
+name: roles/serviceconsumermanagement.tenancyUnitsViewer
+name: roles/servicedirectory.admin
+name: roles/servicedirectory.editor
+name: roles/servicedirectory.networkAttacher
+name: roles/servicedirectory.pscAuthorizedService
+name: roles/servicedirectory.serviceAgent
+name: roles/servicedirectory.viewer
+name: roles/servicehealth.viewer
+name: roles/servicemanagement.admin
+name: roles/servicemanagement.configEditor
+name: roles/servicemanagement.quotaAdmin
+name: roles/servicemanagement.quotaViewer
+name: roles/servicemanagement.reporter
+name: roles/servicemanagement.serviceConsumer
+name: roles/servicemanagement.serviceController
+name: roles/servicenetworking.networksAdmin
+name: roles/servicenetworking.serviceAgent
+name: roles/servicesecurityinsights.securityInsightsViewer
+name: roles/serviceusage.apiKeysAdmin
+name: roles/serviceusage.apiKeysViewer
+name: roles/serviceusage.serviceUsageAdmin
+name: roles/serviceusage.serviceUsageConsumer
+name: roles/serviceusage.serviceUsageViewer
+name: roles/source.admin
+name: roles/source.reader
+name: roles/source.writer
+name: roles/sourcerepo.serviceAgent
+name: roles/spanner.admin
+name: roles/spanner.backupAdmin
+name: roles/spanner.backupWriter
+name: roles/spanner.databaseAdmin
+name: roles/spanner.databaseReader
+name: roles/spanner.databaseReaderWithDataBoost
+name: roles/spanner.databaseRoleUser
+name: roles/spanner.databaseUser
+name: roles/spanner.fineGrainedAccessUser
+name: roles/spanner.restoreAdmin
+name: roles/spanner.serviceAgent
+name: roles/spanner.viewer
+name: roles/speakerid.admin
+name: roles/speakerid.editor
+name: roles/speakerid.verifier
+name: roles/speakerid.viewer
+name: roles/spectrumsas.serviceAgent
+name: roles/speech.admin
+name: roles/speech.client
+name: roles/speech.editor
+name: roles/speech.serviceAgent
+name: roles/stackdriver.accounts.editor
+name: roles/stackdriver.accounts.viewer
+name: roles/stackdriver.resourceMetadata.writer
+name: roles/storage.admin
+name: roles/storage.bucketViewer
+name: roles/storage.expressModeServiceInput
+name: roles/storage.expressModeServiceOutput
+name: roles/storage.expressModeUserAccess
+name: roles/storage.folderAdmin
+name: roles/storage.hmacKeyAdmin
+name: roles/storage.insightsCollectorService
+name: roles/storage.legacyBucketOwner
+name: roles/storage.legacyBucketReader
+name: roles/storage.legacyBucketWriter
+name: roles/storage.legacyObjectOwner
+name: roles/storage.legacyObjectReader
+name: roles/storage.objectAdmin
+name: roles/storage.objectCreator
+name: roles/storage.objectUser
+name: roles/storage.objectViewer
+name: roles/storageinsights.admin
+name: roles/storageinsights.analyst
+name: roles/storageinsights.serviceAgent
+name: roles/storageinsights.viewer
+name: roles/storagetransfer.admin
+name: roles/storagetransfer.serviceAgent
+name: roles/storagetransfer.transferAgent
+name: roles/storagetransfer.user
+name: roles/storagetransfer.viewer
+name: roles/stream.admin
+name: roles/stream.contentAdmin
+name: roles/stream.contentBuilder
+name: roles/stream.instanceAdmin
+name: roles/stream.serviceAgent
+name: roles/stream.viewer
+name: roles/subscribewithgoogledeveloper.developer
+name: roles/telcoautomation.admin
+name: roles/telcoautomation.blueprintDesigner
+name: roles/telcoautomation.deploymentAdmin
+name: roles/telcoautomation.opsAdminTier1
+name: roles/telcoautomation.opsAdminTier4
+name: roles/telcoautomation.serviceOrchestrator
+name: roles/telemetry.metricsWriter
+name: roles/telemetry.tracesWriter
+name: roles/telemetry.writer
+name: roles/timeseriesinsights.datasetsEditor
+name: roles/timeseriesinsights.datasetsOwner
+name: roles/timeseriesinsights.datasetsViewer
+name: roles/tpu.admin
+name: roles/tpu.serviceAgent
+name: roles/tpu.viewer
+name: roles/tpu.xpnAgent
+name: roles/trafficdirector.client
+name: roles/transcoder.admin
+name: roles/transcoder.serviceAgent
+name: roles/transcoder.viewer
+name: roles/transferappliance.admin
+name: roles/transferappliance.viewer
+name: roles/translationhub.admin
+name: roles/translationhub.portalUser
+name: roles/videostitcher.admin
+name: roles/videostitcher.user
+name: roles/videostitcher.viewer
+name: roles/viewer
+name: roles/visionai.admin
+name: roles/visionai.analysisEditor
+name: roles/visionai.analysisViewer
+name: roles/visionai.annotationEditor
+name: roles/visionai.annotationViewer
+name: roles/visionai.applicationEditor
+name: roles/visionai.applicationViewer
+name: roles/visionai.assetCreator
+name: roles/visionai.assetEditor
+name: roles/visionai.assetViewer
+name: roles/visionai.clusterEditor
+name: roles/visionai.clusterViewer
+name: roles/visionai.corpusAdmin
+name: roles/visionai.corpusEditor
+name: roles/visionai.corpusViewer
+name: roles/visionai.corpusWriter
+name: roles/visionai.editor
+name: roles/visionai.eventEditor
+name: roles/visionai.eventViewer
+name: roles/visionai.indexEndpointAdmin
+name: roles/visionai.indexEndpointEditor
+name: roles/visionai.indexEndpointViewer
+name: roles/visionai.indexEndpointWriter
+name: roles/visionai.operatorEditor
+name: roles/visionai.operatorViewer
+name: roles/visionai.packetReceiver
+name: roles/visionai.packetSender
+name: roles/visionai.processorEditor
+name: roles/visionai.processorViewer
+name: roles/visionai.retailcatalogEditor
+name: roles/visionai.retailcatalogViewer
+name: roles/visionai.retailendpointEditor
+name: roles/visionai.retailendpointViewer
+name: roles/visionai.seriesEditor
+name: roles/visionai.seriesViewer
+name: roles/visionai.serviceAgent
+name: roles/visionai.streamEditor
+name: roles/visionai.streamViewer
+name: roles/visionai.uiStreamEditor
+name: roles/visionai.uiStreamViewer
+name: roles/visionai.viewer
+name: roles/visualinspection.editor
+name: roles/visualinspection.serviceAgent
+name: roles/visualinspection.usageMetricsReporter
+name: roles/visualinspection.viewer
+name: roles/vmmigration.admin
+name: roles/vmmigration.serviceAgent
+name: roles/vmmigration.viewer
+name: roles/vmwareengine.serviceAgent
+name: roles/vmwareengine.vmwareengineAdmin
+name: roles/vmwareengine.vmwareengineViewer
+name: roles/vpcaccess.admin
+name: roles/vpcaccess.serviceAgent
+name: roles/vpcaccess.user
+name: roles/vpcaccess.viewer
+name: roles/websecurityscanner.serviceAgent
+name: roles/workflows.admin
+name: roles/workflows.editor
+name: roles/workflows.invoker
+name: roles/workflows.serviceAgent
+name: roles/workflows.viewer
+name: roles/workloadcertificate.admin
+name: roles/workloadcertificate.registrationAdmin
+name: roles/workloadcertificate.registrationViewer
+name: roles/workloadcertificate.serviceAgent
+name: roles/workloadcertificate.viewer
+name: roles/workloadmanager.admin
+name: roles/workloadmanager.deploymentAdmin
+name: roles/workloadmanager.deploymentViewer
+name: roles/workloadmanager.evaluationAdmin
+name: roles/workloadmanager.evaluationViewer
+name: roles/workloadmanager.insightWriter
+name: roles/workloadmanager.serviceAgent
+name: roles/workloadmanager.viewer
+name: roles/workloadmanager.worker
+name: roles/workloadmanager.workloadViewer
+name: roles/workstations.admin
+name: roles/workstations.networkAdmin
+name: roles/workstations.operationViewer
+name: roles/workstations.policyAdmin
+name: roles/workstations.serviceAgent
+name: roles/workstations.user
+name: roles/workstations.workstationCreator
+name: roles/workstations.workstationLimitExemptedCreator
+[student-04-e3cbc1a204e5@centos-clean ~]$
+[student-04-e3cbc1a204e5@centos-clean ~]$
+[student-04-e3cbc1a204e5@centos-clean ~]$ gcloud iam roles describe roles/compute.instanceAdmin
+description: Full control of Compute Engine instance resources.
+etag: AA==
+includedPermissions:
+
+- backupdr.backupPlanAssociations.createForComputeInstance
+- backupdr.backupPlanAssociations.deleteForComputeInstance
+- backupdr.backupPlanAssociations.list
+- backupdr.backupPlanAssociations.triggerBackupForComputeInstance
+- backupdr.backupPlans.get
+- backupdr.backupPlans.list
+- backupdr.backupPlans.useForComputeInstance
+- backupdr.backupVaults.get
+- backupdr.backupVaults.list
+- backupdr.locations.list
+- backupdr.operations.get
+- backupdr.operations.list
+- backupdr.serviceConfig.initialize
+- cloudkms.keyHandles.create
+- cloudkms.keyHandles.get
+- cloudkms.keyHandles.list
+- cloudkms.operations.get
+- cloudkms.projects.showEffectiveAutokeyConfig
+- compute.acceleratorTypes.get
+- compute.acceleratorTypes.list
+- compute.addresses.createInternal
+- compute.addresses.deleteInternal
+- compute.addresses.get
+- compute.addresses.list
+- compute.addresses.listEffectiveTags
+- compute.addresses.listTagBindings
+- compute.addresses.use
+- compute.addresses.useInternal
+- compute.autoscalers.create
+- compute.autoscalers.delete
+- compute.autoscalers.get
+- compute.autoscalers.list
+- compute.autoscalers.update
+- compute.diskSettings.get
+- compute.diskTypes.get
+- compute.diskTypes.list
+- compute.disks.create
+- compute.disks.createSnapshot
+- compute.disks.delete
+- compute.disks.get
+- compute.disks.list
+- compute.disks.resize
+- compute.disks.setLabels
+- compute.disks.startAsyncReplication
+- compute.disks.stopAsyncReplication
+- compute.disks.stopGroupAsyncReplication
+- compute.disks.update
+- compute.disks.use
+- compute.disks.useReadOnly
+- compute.globalAddresses.get
+- compute.globalAddresses.list
+- compute.globalAddresses.listEffectiveTags
+- compute.globalAddresses.listTagBindings
+- compute.globalAddresses.use
+- compute.globalNetworkEndpointGroups.attachNetworkEndpoints
+- compute.globalNetworkEndpointGroups.create
+- compute.globalNetworkEndpointGroups.createTagBinding
+- compute.globalNetworkEndpointGroups.delete
+- compute.globalNetworkEndpointGroups.deleteTagBinding
+- compute.globalNetworkEndpointGroups.detachNetworkEndpoints
+- compute.globalNetworkEndpointGroups.get
+- compute.globalNetworkEndpointGroups.list
+- compute.globalNetworkEndpointGroups.listEffectiveTags
+- compute.globalNetworkEndpointGroups.listTagBindings
+- compute.globalNetworkEndpointGroups.use
+- compute.globalOperations.get
+- compute.globalOperations.list
+- compute.images.get
+- compute.images.getFromFamily
+- compute.images.list
+- compute.images.useReadOnly
+- compute.instanceGroupManagers.create
+- compute.instanceGroupManagers.createTagBinding
+- compute.instanceGroupManagers.delete
+- compute.instanceGroupManagers.deleteTagBinding
+- compute.instanceGroupManagers.get
+- compute.instanceGroupManagers.list
+- compute.instanceGroupManagers.listEffectiveTags
+- compute.instanceGroupManagers.listTagBindings
+- compute.instanceGroupManagers.update
+- compute.instanceGroupManagers.use
+- compute.instanceGroups.create
+- compute.instanceGroups.createTagBinding
+- compute.instanceGroups.delete
+- compute.instanceGroups.deleteTagBinding
+- compute.instanceGroups.get
+- compute.instanceGroups.list
+- compute.instanceGroups.listEffectiveTags
+- compute.instanceGroups.listTagBindings
+- compute.instanceGroups.update
+- compute.instanceGroups.use
+- compute.instanceSettings.get
+- compute.instanceTemplates.create
+- compute.instanceTemplates.delete
+- compute.instanceTemplates.get
+- compute.instanceTemplates.getIamPolicy
+- compute.instanceTemplates.list
+- compute.instanceTemplates.setIamPolicy
+- compute.instanceTemplates.useReadOnly
+- compute.instances.addAccessConfig
+- compute.instances.addNetworkInterface
+- compute.instances.addResourcePolicies
+- compute.instances.attachDisk
+- compute.instances.create
+- compute.instances.createTagBinding
+- compute.instances.delete
+- compute.instances.deleteAccessConfig
+- compute.instances.deleteNetworkInterface
+- compute.instances.deleteTagBinding
+- compute.instances.detachDisk
+- compute.instances.get
+- compute.instances.getEffectiveFirewalls
+- compute.instances.getGuestAttributes
+- compute.instances.getIamPolicy
+- compute.instances.getScreenshot
+- compute.instances.getSerialPortOutput
+- compute.instances.getShieldedInstanceIdentity
+- compute.instances.getShieldedVmIdentity
+- compute.instances.list
+- compute.instances.listEffectiveTags
+- compute.instances.listReferrers
+- compute.instances.listTagBindings
+- compute.instances.osAdminLogin
+- compute.instances.osLogin
+- compute.instances.pscInterfaceCreate
+- compute.instances.removeResourcePolicies
+- compute.instances.reset
+- compute.instances.resume
+- compute.instances.sendDiagnosticInterrupt
+- compute.instances.setDeletionProtection
+- compute.instances.setDiskAutoDelete
+- compute.instances.setIamPolicy
+- compute.instances.setLabels
+- compute.instances.setMachineResources
+- compute.instances.setMachineType
+- compute.instances.setMetadata
+- compute.instances.setMinCpuPlatform
+- compute.instances.setName
+- compute.instances.setScheduling
+- compute.instances.setSecurityPolicy
+- compute.instances.setServiceAccount
+- compute.instances.setShieldedInstanceIntegrityPolicy
+- compute.instances.setShieldedVmIntegrityPolicy
+- compute.instances.setTags
+- compute.instances.simulateMaintenanceEvent
+- compute.instances.start
+- compute.instances.startWithEncryptionKey
+- compute.instances.stop
+- compute.instances.suspend
+- compute.instances.update
+- compute.instances.updateAccessConfig
+- compute.instances.updateDisplayDevice
+- compute.instances.updateNetworkInterface
+- compute.instances.updateSecurity
+- compute.instances.updateShieldedInstanceConfig
+- compute.instances.updateShieldedVmConfig
+- compute.instances.use
+- compute.instances.useReadOnly
+- compute.licenses.get
+- compute.licenses.list
+- compute.machineImages.create
+- compute.machineImages.delete
+- compute.machineImages.get
+- compute.machineImages.getIamPolicy
+- compute.machineImages.list
+- compute.machineImages.setIamPolicy
+- compute.machineImages.setLabels
+- compute.machineImages.useReadOnly
+- compute.machineTypes.get
+- compute.machineTypes.list
+- compute.multiMig.create
+- compute.multiMig.delete
+- compute.multiMig.get
+- compute.multiMig.list
+- compute.networkEndpointGroups.attachNetworkEndpoints
+- compute.networkEndpointGroups.create
+- compute.networkEndpointGroups.createTagBinding
+- compute.networkEndpointGroups.delete
+- compute.networkEndpointGroups.deleteTagBinding
+- compute.networkEndpointGroups.detachNetworkEndpoints
+- compute.networkEndpointGroups.get
+- compute.networkEndpointGroups.list
+- compute.networkEndpointGroups.listEffectiveTags
+- compute.networkEndpointGroups.listTagBindings
+- compute.networkEndpointGroups.use
+- compute.networks.get
+- compute.networks.list
+- compute.networks.listEffectiveTags
+- compute.networks.listTagBindings
+- compute.networks.use
+- compute.networks.useExternalIp
+- compute.projects.get
+- compute.regionNetworkEndpointGroups.attachNetworkEndpoints
+- compute.regionNetworkEndpointGroups.create
+- compute.regionNetworkEndpointGroups.createTagBinding
+- compute.regionNetworkEndpointGroups.delete
+- compute.regionNetworkEndpointGroups.deleteTagBinding
+- compute.regionNetworkEndpointGroups.detachNetworkEndpoints
+- compute.regionNetworkEndpointGroups.get
+- compute.regionNetworkEndpointGroups.list
+- compute.regionNetworkEndpointGroups.listEffectiveTags
+- compute.regionNetworkEndpointGroups.listTagBindings
+- compute.regionNetworkEndpointGroups.use
+- compute.regionOperations.get
+- compute.regionOperations.list
+- compute.regions.get
+- compute.regions.list
+- compute.reservationBlocks.get
+- compute.reservationBlocks.list
+- compute.reservations.get
+- compute.reservations.list
+- compute.resourcePolicies.list
+- compute.resourcePolicies.useReadOnly
+- compute.storagePools.get
+- compute.storagePools.list
+- compute.storagePools.use
+- compute.subnetworks.get
+- compute.subnetworks.list
+- compute.subnetworks.listEffectiveTags
+- compute.subnetworks.listTagBindings
+- compute.subnetworks.use
+- compute.subnetworks.useExternalIp
+- compute.targetPools.get
+- compute.targetPools.list
+- compute.targetPools.listEffectiveTags
+- compute.targetPools.listTagBindings
+- compute.zoneOperations.get
+- compute.zoneOperations.list
+- compute.zones.get
+- compute.zones.list
+- resourcemanager.projects.get
+- resourcemanager.projects.list
+- serviceusage.quotas.get
+- serviceusage.services.get
+- serviceusage.services.list
+  name: roles/compute.instanceAdmin
+  stage: GA
+  title: Compute Instance Admin (beta)
+  [student-04-e3cbc1a204e5@centos-clean ~]$
+  [student-04-e3cbc1a204e5@centos-clean ~]$
+  [student-04-e3cbc1a204e5@centos-clean ~]$ gcloud config configurations activate user2
+  Activated [user2].
+  [student-04-e3cbc1a204e5@centos-clean ~]$
+  [student-04-e3cbc1a204e5@centos-clean ~]$ echo "export PROJECTID2=qwiklabs-gcp-03-957d45c0f6dd" >> ~/.bashrc
+  [student-04-e3cbc1a204e5@centos-clean ~]$
+  [student-04-e3cbc1a204e5@centos-clean ~]$
+  [student-04-e3cbc1a204e5@centos-clean ~]$ . ~/.bashrc
+  gcloud config set project $PROJECTID2
+  WARNING: [student-04-e3c9f29a26e9@qwiklabs.net] does not have permission to access projects instance [qwiklabs-gcp-03-957d45c0f6dd] (or it may not exist): The caller does not have permission. This command is authenticated as student-04-e3c9f29a26e9@qwiklabs.net which is the active account specified by the [core/account] property
+  Are you sure you wish to set property [core/project] to qwiklabs-gcp-03-957d45c0f6dd?
+
+Do you want to continue (Y/n)? n
+
+[student-04-e3cbc1a204e5@centos-clean ~]$
+[student-04-e3cbc1a204e5@centos-clean ~]$
+[student-04-e3cbc1a204e5@centos-clean ~]$ gcloud config configurations activate default
+Activated [default].
+[student-04-e3cbc1a204e5@centos-clean ~]$
+[student-04-e3cbc1a204e5@centos-clean ~]$ sudo yum -y install epel-release
+sudo yum -y install jq
+Last metadata expiration check: 0:08:35 ago on Tue 22 Apr 2025 02:48:36 AM UTC.
+Dependencies resolved.
+================================================================================================================
+Package Architecture Version Repository Size
+================================================================================================================
+Installing:
+epel-release noarch 9-7.el9 extras-common 19 k
+Installing weak dependencies:
+epel-next-release noarch 9-7.el9 extras-common 8.1 k
+
+# Transaction Summary
+
+Install 2 Packages
+
+Total download size: 27 k
+Installed size: 29 k
+Downloading Packages:
+(1/2): epel-next-release-9-7.el9.noarch.rpm 54 kB/s | 8.1 kB 00:00  
+(2/2): epel-release-9-7.el9.noarch.rpm 90 kB/s | 19 kB 00:00
+
+---
+
+Total 62 kB/s | 27 kB 00:00  
+CentOS Stream 9 - Extras packages 1.7 MB/s | 2.1 kB 00:00  
+Importing GPG key 0x1D997668:
+Userid : "CentOS Extras SIG (https://wiki.centos.org/SpecialInterestGroup) <security@centos.org>"
+Fingerprint: 363F C097 2F64 B699 AED3 968E 1FF6 A217 1D99 7668
+From : /etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-SIG-Extras-SHA512
+Key imported successfully
+Running transaction check
+Transaction check succeeded.
+Running transaction test
+Transaction test succeeded.
+Running transaction
+Preparing : 1/1
+Installing : epel-release-9-7.el9.noarch 1/2
+Running scriptlet: epel-release-9-7.el9.noarch 1/2
+Many EPEL packages require the CodeReady Builder (CRB) repository.
+It is recommended that you run /usr/bin/crb enable to enable the CRB repository.
+
+Installing : epel-next-release-9-7.el9.noarch 2/2
+Running scriptlet: epel-next-release-9-7.el9.noarch 2/2
+Verifying : epel-next-release-9-7.el9.noarch 1/2
+Verifying : epel-release-9-7.el9.noarch 2/2
+
+Installed:
+epel-next-release-9-7.el9.noarch epel-release-9-7.el9.noarch
+
+Complete!
+Extra Packages for Enterprise Linux 9 - x86_64 34 MB/s | 23 MB 00:00  
+Extra Packages for Enterprise Linux 9 openh264 (From Cisco) - x86_64 3.8 kB/s | 2.5 kB 00:00  
+Extra Packages for Enterprise Linux 9 - Next - x86_64 1.0 MB/s | 612 kB 00:00  
+Package jq-1.6-17.el9.x86_64 is already installed.
+Dependencies resolved.
+Nothing to do.
+Complete!
+[student-04-e3cbc1a204e5@centos-clean ~]$
+[student-04-e3cbc1a204e5@centos-clean ~]$
+[student-04-e3cbc1a204e5@centos-clean ~]$ echo "export USERID2=student-04-e3c9f29a26e9@qwiklabs.net" >> ~/.bashrc
+[student-04-e3cbc1a204e5@centos-clean ~]$
+[student-04-e3cbc1a204e5@centos-clean ~]$ . ~/.bashrc
+gcloud projects add-iam-policy-binding $PROJECTID2 --member user:$USERID2 --role=roles/viewer
+Updated IAM policy for project [qwiklabs-gcp-03-957d45c0f6dd].
+bindings:
+
+- members:
+  - serviceAccount:qwiklabs-gcp-03-957d45c0f6dd@qwiklabs-gcp-03-957d45c0f6dd.iam.gserviceaccount.com
+    role: roles/bigquery.admin
+- members:
+  - serviceAccount:1077107414602@cloudbuild.gserviceaccount.com
+    role: roles/cloudbuild.builds.builder
+- members:
+  - serviceAccount:service-1077107414602@gcp-sa-cloudbuild.iam.gserviceaccount.com
+    role: roles/cloudbuild.serviceAgent
+- members:
+  - serviceAccount:service-1077107414602@compute-system.iam.gserviceaccount.com
+    role: roles/compute.serviceAgent
+- members:
+  - serviceAccount:service-1077107414602@container-engine-robot.iam.gserviceaccount.com
+    role: roles/container.serviceAgent
+- members:
+  - serviceAccount:1077107414602-compute@developer.gserviceaccount.com
+  - serviceAccount:1077107414602@cloudservices.gserviceaccount.com
+    role: roles/editor
+- members:
+  - user:student-04-e3cbc1a204e5@qwiklabs.net
+    role: roles/iam.serviceAccountAdmin
+- members:
+  - serviceAccount:admiral@qwiklabs-services-prod.iam.gserviceaccount.com
+  - serviceAccount:qwiklabs-gcp-03-957d45c0f6dd@qwiklabs-gcp-03-957d45c0f6dd.iam.gserviceaccount.com
+  - user:student-04-e3cbc1a204e5@qwiklabs.net
+    role: roles/owner
+- members:
+  - user:student-04-e3cbc1a204e5@qwiklabs.net
+    role: roles/resourcemanager.projectIamAdmin
+- members:
+  - serviceAccount:qwiklabs-gcp-03-957d45c0f6dd@qwiklabs-gcp-03-957d45c0f6dd.iam.gserviceaccount.com
+    role: roles/storage.admin
+- members:
+  - user:student-04-e3c9f29a26e9@qwiklabs.net
+  - user:student-04-e3cbc1a204e5@qwiklabs.net
+    role: roles/viewer
+    etag: BwYzVSaaAAw=
+    version: 1
+    [student-04-e3cbc1a204e5@centos-clean ~]$
+    [student-04-e3cbc1a204e5@centos-clean ~]$
+    [student-04-e3cbc1a204e5@centos-clean ~]$ gcloud config configurations activate user2
+    Activated [user2].
+    [student-04-e3cbc1a204e5@centos-clean ~]$ gcloud config set project $PROJECTID2
+Updated property [core/project].
+[student-04-e3cbc1a204e5@centos-clean ~]$ gcloud compute instances list
+    Listed 0 items.
+    [student-04-e3cbc1a204e5@centos-clean ~]$ gcloud compute instances create lab-2 --zone us-west1-a --machine-type=e2-standard-2
+    ERROR: (gcloud.compute.instances.create) Could not fetch resource:
+- Required 'compute.instances.create' permission for 'projects/qwiklabs-gcp-03-957d45c0f6dd/zones/us-west1-a/instances/lab-2'
+
+[student-04-e3cbc1a204e5@centos-clean ~]$
+[student-04-e3cbc1a204e5@centos-clean ~]$ gcloud config configurations activate default
+Activated [default].
+[student-04-e3cbc1a204e5@centos-clean ~]$
+[student-04-e3cbc1a204e5@centos-clean ~]$ gcloud iam roles create devops --project $PROJECTID2 --permissions "compute.instances.create,compute.instances.delete,compute.instances.start,compute.instances.stop,compute.instances.update,compute.disks.create,compute.subnetworks.use,compute.subnetworks.useExternalIp,compute.instances.setMetadata,compute.instances.setServiceAccount"
+Created role [devops].
+etag: BwYzVStwE7s=
+includedPermissions:
+
+- compute.disks.create
+- compute.instances.create
+- compute.instances.delete
+- compute.instances.setMetadata
+- compute.instances.setServiceAccount
+- compute.instances.start
+- compute.instances.stop
+- compute.instances.update
+- compute.subnetworks.use
+- compute.subnetworks.useExternalIp
+  name: projects/qwiklabs-gcp-03-957d45c0f6dd/roles/devops
+  stage: ALPHA
+  title: devops
+  [student-04-e3cbc1a204e5@centos-clean ~]$
+  [student-04-e3cbc1a204e5@centos-clean ~]$
+  [student-04-e3cbc1a204e5@centos-clean ~]$
+  [student-04-e3cbc1a204e5@centos-clean ~]$ gcloud projects add-iam-policy-binding $PROJECTID2 --member user:$USERID2 --role=roles/iam.serviceAccountUser
+  Updated IAM policy for project [qwiklabs-gcp-03-957d45c0f6dd].
+  bindings:
+- members:
+  - serviceAccount:qwiklabs-gcp-03-957d45c0f6dd@qwiklabs-gcp-03-957d45c0f6dd.iam.gserviceaccount.com
+    role: roles/bigquery.admin
+- members:
+  - serviceAccount:1077107414602@cloudbuild.gserviceaccount.com
+    role: roles/cloudbuild.builds.builder
+- members:
+  - serviceAccount:service-1077107414602@gcp-sa-cloudbuild.iam.gserviceaccount.com
+    role: roles/cloudbuild.serviceAgent
+- members:
+  - serviceAccount:service-1077107414602@compute-system.iam.gserviceaccount.com
+    role: roles/compute.serviceAgent
+- members:
+  - serviceAccount:service-1077107414602@container-engine-robot.iam.gserviceaccount.com
+    role: roles/container.serviceAgent
+- members:
+  - serviceAccount:1077107414602-compute@developer.gserviceaccount.com
+  - serviceAccount:1077107414602@cloudservices.gserviceaccount.com
+    role: roles/editor
+- members:
+  - user:student-04-e3cbc1a204e5@qwiklabs.net
+    role: roles/iam.serviceAccountAdmin
+- members:
+  - user:student-04-e3c9f29a26e9@qwiklabs.net
+    role: roles/iam.serviceAccountUser
+- members:
+  - serviceAccount:admiral@qwiklabs-services-prod.iam.gserviceaccount.com
+  - serviceAccount:qwiklabs-gcp-03-957d45c0f6dd@qwiklabs-gcp-03-957d45c0f6dd.iam.gserviceaccount.com
+  - user:student-04-e3cbc1a204e5@qwiklabs.net
+    role: roles/owner
+- members:
+  - user:student-04-e3cbc1a204e5@qwiklabs.net
+    role: roles/resourcemanager.projectIamAdmin
+- members:
+  - serviceAccount:qwiklabs-gcp-03-957d45c0f6dd@qwiklabs-gcp-03-957d45c0f6dd.iam.gserviceaccount.com
+    role: roles/storage.admin
+- members:
+  - user:student-04-e3c9f29a26e9@qwiklabs.net
+  - user:student-04-e3cbc1a204e5@qwiklabs.net
+    role: roles/viewer
+    etag: BwYzVSzO-Uw=
+    version: 1
+    [student-04-e3cbc1a204e5@centos-clean ~]$
+    [student-04-e3cbc1a204e5@centos-clean ~]$ gcloud projects add-iam-policy-binding $PROJECTID2 --member user:$USERID2 --role=projects/$PROJECTID2/roles/devops
+    Updated IAM policy for project [qwiklabs-gcp-03-957d45c0f6dd].
+    bindings:
+- members:
+  - user:student-04-e3c9f29a26e9@qwiklabs.net
+    role: projects/qwiklabs-gcp-03-957d45c0f6dd/roles/devops
+- members:
+  - serviceAccount:qwiklabs-gcp-03-957d45c0f6dd@qwiklabs-gcp-03-957d45c0f6dd.iam.gserviceaccount.com
+    role: roles/bigquery.admin
+- members:
+  - serviceAccount:1077107414602@cloudbuild.gserviceaccount.com
+    role: roles/cloudbuild.builds.builder
+- members:
+  - serviceAccount:service-1077107414602@gcp-sa-cloudbuild.iam.gserviceaccount.com
+    role: roles/cloudbuild.serviceAgent
+- members:
+  - serviceAccount:service-1077107414602@compute-system.iam.gserviceaccount.com
+    role: roles/compute.serviceAgent
+- members:
+  - serviceAccount:service-1077107414602@container-engine-robot.iam.gserviceaccount.com
+    role: roles/container.serviceAgent
+- members:
+  - serviceAccount:1077107414602-compute@developer.gserviceaccount.com
+  - serviceAccount:1077107414602@cloudservices.gserviceaccount.com
+    role: roles/editor
+- members:
+  - user:student-04-e3cbc1a204e5@qwiklabs.net
+    role: roles/iam.serviceAccountAdmin
+- members:
+  - user:student-04-e3c9f29a26e9@qwiklabs.net
+    role: roles/iam.serviceAccountUser
+- members:
+  - serviceAccount:admiral@qwiklabs-services-prod.iam.gserviceaccount.com
+  - serviceAccount:qwiklabs-gcp-03-957d45c0f6dd@qwiklabs-gcp-03-957d45c0f6dd.iam.gserviceaccount.com
+  - user:student-04-e3cbc1a204e5@qwiklabs.net
+    role: roles/owner
+- members:
+  - user:student-04-e3cbc1a204e5@qwiklabs.net
+    role: roles/resourcemanager.projectIamAdmin
+- members:
+  - serviceAccount:qwiklabs-gcp-03-957d45c0f6dd@qwiklabs-gcp-03-957d45c0f6dd.iam.gserviceaccount.com
+    role: roles/storage.admin
+- members:
+  - user:student-04-e3c9f29a26e9@qwiklabs.net
+  - user:student-04-e3cbc1a204e5@qwiklabs.net
+    role: roles/viewer
+    etag: BwYzVS3qVwE=
+    version: 1
+    [student-04-e3cbc1a204e5@centos-clean ~]$
+    [student-04-e3cbc1a204e5@centos-clean ~]$
+    [student-04-e3cbc1a204e5@centos-clean ~]$ gcloud config configurations activate user2
+    Activated [user2].
+    [student-04-e3cbc1a204e5@centos-clean ~]$
+    [student-04-e3cbc1a204e5@centos-clean ~]$
+    [student-04-e3cbc1a204e5@centos-clean ~]$ gcloud compute instances create lab-2 --zone us-west1-a --machine-type=e2-standard-2
+    Created [https://www.googleapis.com/compute/v1/projects/qwiklabs-gcp-03-957d45c0f6dd/zones/us-west1-a/instances/lab-2].
+    NAME ZONE MACHINE_TYPE PREEMPTIBLE INTERNAL_IP EXTERNAL_IP STATUS
+    lab-2 us-west1-a e2-standard-2 10.138.0.2 35.197.113.19 RUNNING
+    [student-04-e3cbc1a204e5@centos-clean ~]$
+    [student-04-e3cbc1a204e5@centos-clean ~]$
+    [student-04-e3cbc1a204e5@centos-clean ~]$ gcloud compute instances list
+    NAME ZONE MACHINE_TYPE PREEMPTIBLE INTERNAL_IP EXTERNAL_IP STATUS
+    lab-2 us-west1-a e2-standard-2 10.138.0.2 35.197.113.19 RUNNING
+    [student-04-e3cbc1a204e5@centos-clean ~]$
+    [student-04-e3cbc1a204e5@centos-clean ~]$ gcloud config configurations activate default
+    Activated [default].
+    [student-04-e3cbc1a204e5@centos-clean ~]$
+    [student-04-e3cbc1a204e5@centos-clean ~]$ gcloud config set project $PROJECTID2
+Updated property [core/project].
+[student-04-e3cbc1a204e5@centos-clean ~]$
+    [student-04-e3cbc1a204e5@centos-clean ~]$ gcloud iam service-accounts create devops --display-name devops
+    Created service account [devops].
+    [student-04-e3cbc1a204e5@centos-clean ~]$
+    [student-04-e3cbc1a204e5@centos-clean ~]$
+    [student-04-e3cbc1a204e5@centos-clean ~]$ gcloud iam service-accounts list --filter "displayName=devops"
+    DISPLAY NAME EMAIL DISABLED
+    devops devops@qwiklabs-gcp-03-957d45c0f6dd.iam.gserviceaccount.com False
+    [student-04-e3cbc1a204e5@centos-clean ~]$
+    [student-04-e3cbc1a204e5@centos-clean ~]$ SA=$(gcloud iam service-accounts list --format="value(email)" --filter "displayName=devops")
+[student-04-e3cbc1a204e5@centos-clean ~]$
+    [student-04-e3cbc1a204e5@centos-clean ~]$
+    [student-04-e3cbc1a204e5@centos-clean ~]$ gcloud projects add-iam-policy-binding $PROJECTID2 --member serviceAccount:$SA --role=roles/iam.serviceAccountUser
+    Updated IAM policy for project [qwiklabs-gcp-03-957d45c0f6dd].
+    bindings:
+- members:
+  - user:student-04-e3c9f29a26e9@qwiklabs.net
+    role: projects/qwiklabs-gcp-03-957d45c0f6dd/roles/devops
+- members:
+  - serviceAccount:qwiklabs-gcp-03-957d45c0f6dd@qwiklabs-gcp-03-957d45c0f6dd.iam.gserviceaccount.com
+    role: roles/bigquery.admin
+- members:
+  - serviceAccount:1077107414602@cloudbuild.gserviceaccount.com
+    role: roles/cloudbuild.builds.builder
+- members:
+  - serviceAccount:service-1077107414602@gcp-sa-cloudbuild.iam.gserviceaccount.com
+    role: roles/cloudbuild.serviceAgent
+- members:
+  - serviceAccount:service-1077107414602@compute-system.iam.gserviceaccount.com
+    role: roles/compute.serviceAgent
+- members:
+  - serviceAccount:service-1077107414602@container-engine-robot.iam.gserviceaccount.com
+    role: roles/container.serviceAgent
+- members:
+  - serviceAccount:1077107414602-compute@developer.gserviceaccount.com
+  - serviceAccount:1077107414602@cloudservices.gserviceaccount.com
+    role: roles/editor
+- members:
+  - user:student-04-e3cbc1a204e5@qwiklabs.net
+    role: roles/iam.serviceAccountAdmin
+- members:
+  - serviceAccount:devops@qwiklabs-gcp-03-957d45c0f6dd.iam.gserviceaccount.com
+  - user:student-04-e3c9f29a26e9@qwiklabs.net
+    role: roles/iam.serviceAccountUser
+- members:
+  - serviceAccount:admiral@qwiklabs-services-prod.iam.gserviceaccount.com
+  - serviceAccount:qwiklabs-gcp-03-957d45c0f6dd@qwiklabs-gcp-03-957d45c0f6dd.iam.gserviceaccount.com
+  - user:student-04-e3cbc1a204e5@qwiklabs.net
+    role: roles/owner
+- members:
+  - user:student-04-e3cbc1a204e5@qwiklabs.net
+    role: roles/resourcemanager.projectIamAdmin
+- members:
+  - serviceAccount:qwiklabs-gcp-03-957d45c0f6dd@qwiklabs-gcp-03-957d45c0f6dd.iam.gserviceaccount.com
+    role: roles/storage.admin
+- members:
+  - user:student-04-e3c9f29a26e9@qwiklabs.net
+  - user:student-04-e3cbc1a204e5@qwiklabs.net
+    role: roles/viewer
+    etag: BwYzVT_c71s=
+    version: 1
+    [student-04-e3cbc1a204e5@centos-clean ~]$
+    [student-04-e3cbc1a204e5@centos-clean ~]$
+    [student-04-e3cbc1a204e5@centos-clean ~]$ gcloud projects add-iam-policy-binding $PROJECTID2 --member serviceAccount:$SA --role=roles/compute.instanceAdmin
+    Updated IAM policy for project [qwiklabs-gcp-03-957d45c0f6dd].
+    bindings:
+- members:
+  - user:student-04-e3c9f29a26e9@qwiklabs.net
+    role: projects/qwiklabs-gcp-03-957d45c0f6dd/roles/devops
+- members:
+  - serviceAccount:qwiklabs-gcp-03-957d45c0f6dd@qwiklabs-gcp-03-957d45c0f6dd.iam.gserviceaccount.com
+    role: roles/bigquery.admin
+- members:
+  - serviceAccount:1077107414602@cloudbuild.gserviceaccount.com
+    role: roles/cloudbuild.builds.builder
+- members:
+  - serviceAccount:service-1077107414602@gcp-sa-cloudbuild.iam.gserviceaccount.com
+    role: roles/cloudbuild.serviceAgent
+- members:
+  - serviceAccount:devops@qwiklabs-gcp-03-957d45c0f6dd.iam.gserviceaccount.com
+    role: roles/compute.instanceAdmin
+- members:
+  - serviceAccount:service-1077107414602@compute-system.iam.gserviceaccount.com
+    role: roles/compute.serviceAgent
+- members:
+  - serviceAccount:service-1077107414602@container-engine-robot.iam.gserviceaccount.com
+    role: roles/container.serviceAgent
+- members:
+  - serviceAccount:1077107414602-compute@developer.gserviceaccount.com
+  - serviceAccount:1077107414602@cloudservices.gserviceaccount.com
+    role: roles/editor
+- members:
+  - user:student-04-e3cbc1a204e5@qwiklabs.net
+    role: roles/iam.serviceAccountAdmin
+- members:
+  - serviceAccount:devops@qwiklabs-gcp-03-957d45c0f6dd.iam.gserviceaccount.com
+  - user:student-04-e3c9f29a26e9@qwiklabs.net
+    role: roles/iam.serviceAccountUser
+- members:
+  - serviceAccount:admiral@qwiklabs-services-prod.iam.gserviceaccount.com
+  - serviceAccount:qwiklabs-gcp-03-957d45c0f6dd@qwiklabs-gcp-03-957d45c0f6dd.iam.gserviceaccount.com
+  - user:student-04-e3cbc1a204e5@qwiklabs.net
+    role: roles/owner
+- members:
+  - user:student-04-e3cbc1a204e5@qwiklabs.net
+    role: roles/resourcemanager.projectIamAdmin
+- members:
+  - serviceAccount:qwiklabs-gcp-03-957d45c0f6dd@qwiklabs-gcp-03-957d45c0f6dd.iam.gserviceaccount.com
+    role: roles/storage.admin
+- members:
+  - user:student-04-e3c9f29a26e9@qwiklabs.net
+  - user:student-04-e3cbc1a204e5@qwiklabs.net
+    role: roles/viewer
+    etag: BwYzVUDTSF0=
+    version: 1
+    [student-04-e3cbc1a204e5@centos-clean ~]$
+    [student-04-e3cbc1a204e5@centos-clean ~]$
+    [student-04-e3cbc1a204e5@centos-clean ~]$ gcloud compute instances create lab-3 --zone us-west1-a --machine-type=e2-standard-2 --service-account $SA --scopes "https://www.googleapis.com/auth/compute"
+
+Created [https://www.googleapis.com/compute/v1/projects/qwiklabs-gcp-03-957d45c0f6dd/zones/us-west1-a/instances/lab-3].
+NAME ZONE MACHINE_TYPE PREEMPTIBLE INTERNAL_IP EXTERNAL_IP STATUS
+lab-3 us-west1-a e2-standard-2 10.138.0.3 34.168.75.41 RUNNING
+[student-04-e3cbc1a204e5@centos-clean ~]$
+[student-04-e3cbc1a204e5@centos-clean ~]$
+[student-04-e3cbc1a204e5@centos-clean ~]$
+[student-04-e3cbc1a204e5@centos-clean ~]$
+[student-04-e3cbc1a204e5@centos-clean ~]$ gcloud compute ssh lab-3 --zone us-west1-a
+WARNING: The private SSH key file for gcloud does not exist.
+WARNING: The public SSH key file for gcloud does not exist.
+WARNING: You do not have an SSH key for gcloud.
+WARNING: SSH keygen will be executed to generate a key.
+This tool needs to create the directory [/home/student-04-e3cbc1a204e5/.ssh] before being able to generate SSH
+keys.
+
+Do you want to continue (Y/n)? y
+
+Generating public/private rsa key pair.
+Enter passphrase (empty for no passphrase):
+Enter same passphrase again:
+Your identification has been saved in /home/student-04-e3cbc1a204e5/.ssh/google_compute_engine
+Your public key has been saved in /home/student-04-e3cbc1a204e5/.ssh/google_compute_engine.pub
+The key fingerprint is:
+SHA256:c+UhERjiocShfa6/cDgz4mRLSpNiF3xhbyMliBZCEFs student-04-e3cbc1a204e5@centos-clean
+The key's randomart image is:
++---[RSA 3072]----+
+|*+E.o.o .oo. |
+|.oo+oo o. . |
+|.o..o+o. . o |
+|. . .o= + . |
+| o o.+S . . |
+| . ooo .o |
+|.==.B . |
+|+*oo B |
+|. o o. |
++----[SHA256]-----+
+Warning: Permanently added 'compute.6046025774881487214' (ED25519) to the list of known hosts.
+
+Linux lab-3 6.1.0-33-cloud-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.1.133-1 (2025-04-10) x86_64
+
+The programs included with the Debian GNU/Linux system are free software;
+the exact distribution terms for each program are described in the
+individual files in /usr/share/doc/\*/copyright.
+
+Debian GNU/Linux comes with ABSOLUTELY NO WARRANTY, to the extent
+permitted by applicable law.
+Creating directory '/home/student-04-e3cbc1a204e5'.
+
+student-04-e3cbc1a204e5@lab-3:~$
+student-04-e3cbc1a204e5@lab-3:~$
+student-04-e3cbc1a204e5@lab-3:~$
+student-04-e3cbc1a204e5@lab-3:~$ gcloud config list
+[core]
+account = devops@qwiklabs-gcp-03-957d45c0f6dd.iam.gserviceaccount.com
+disable_usage_reporting = True
+project = qwiklabs-gcp-03-957d45c0f6dd
+
+Your active configuration is: [default]
+student-04-e3cbc1a204e5@lab-3:~$
+student-04-e3cbc1a204e5@lab-3:~$
+student-04-e3cbc1a204e5@lab-3:~$ gcloud compute instances create lab-4 --zone us-west1-a --machine-type=e2-standard-2
+Created [https://www.googleapis.com/compute/v1/projects/qwiklabs-gcp-03-957d45c0f6dd/zones/us-west1-a/instances/lab-4].
+NAME ZONE MACHINE_TYPE PREEMPTIBLE INTERNAL_IP EXTERNAL_IP STATUS
+lab-4 us-west1-a e2-standard-2 10.138.0.4 34.145.69.69 RUNNING
+student-04-e3cbc1a204e5@lab-3:~$
+student-04-e3cbc1a204e5@lab-3:~$
+student-04-e3cbc1a204e5@lab-3:~$ gcloud compute instances list
+NAME ZONE MACHINE_TYPE PREEMPTIBLE INTERNAL_IP EXTERNAL_IP STATUS
+lab-2 us-west1-a e2-standard-2 10.138.0.2 35.197.113.19 RUNNING
+lab-3 us-west1-a e2-standard-2 10.138.0.3 34.168.75.41 RUNNING
+lab-4 us-west1-a e2-standard-2 10.138.0.4 34.145.69.69 RUNNING
+student-04-e3cbc1a204e5@lab-3:~$
+
+
+/////
+
+Refer the image in current project - "iam-gcloud-service-account.jpeg"
+
+
+gcloud iam roles create devops --project $PROJECTID2 --permissions "compute.instances.create,compute.instances.delete,compute.instances.start,compute.instances.stop,compute.instances.update,compute.disks.create,compute.subnetworks.use,compute.subnetworks.useExternalIp,compute.instances.setMetadata,compute.instances.setServiceAccount"
+
+
+gcloud iam service-accounts create devops --display-name devops
+gcloud iam service-accounts list  --filter "displayName=devops"
+SA=$(gcloud iam service-accounts list --format="value(email)" --filter "displayName=devops")
+gcloud projects add-iam-policy-binding $PROJECTID2 --member serviceAccount:$SA --role=roles/iam.serviceAccountUser
+
+gcloud projects add-iam-policy-binding $PROJECTID2 --member serviceAccount:$SA --role=roles/compute.instanceAdmin
+
+
+

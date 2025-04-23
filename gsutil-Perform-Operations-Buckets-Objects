@@ -1,0 +1,1072 @@
+In this lab, you will use gsutil to create a bucket and perform operations on objects. gsutil is a Python application that lets you access Cloud Storage from the command line. The gsutil tool has commands such as mb and cp to perform operations. Each command has a set of options that are used to customize settings further.
+
+What you'll learn to do
+Create a bucket
+Copy files from a local folder to a bucket
+Synchronize the contents of the local folder with the contents of the bucket
+Change access control permissions on objects
+Delete a bucket.
+
+git clone https://github.com/GoogleCloudPlatform/training-data-analyst
+
+cd training-data-analyst/blogs
+
+PROJECT_ID=`gcloud config get-value project`
+BUCKET=${PROJECT_ID}-bucket
+
+Create a bucket and multi-regional storage class:
+gsutil mb -c multi_regional gs://${BUCKET}
+
+Task 3. Upload objects to your bucket
+Run the following to copy the endpointslambda object to your bucket:
+gsutil -m cp -r endpointslambda gs://${BUCKET}
+
+Task 4. List objects
+To list objects in your bucket, execute the following command:
+gsutil ls gs://${BUCKET}/\*
+
+Task 5. Sync changes with bucket
+Use the following commands to rename and delete some files:
+mv endpointslambda/Apache2_0License.txt endpointslambda/old.txt
+Copied!
+rm endpointslambda/aeflex-endpoints/app.yaml
+
+Now synchronize the local changes with the bucket:
+gsutil -m rsync -d -r endpointslambda gs://${BUCKET}/endpointslambda
+
+If you have a large number of files to transfer, you might want to use the -m option, to perform a parallel (multi-threaded/multi-processing) copy for faster performance. The -r option allows gsutil to recurse through directories.
+
+In this command, the -d option deletes files from the target if they're missing in the source (in this case, it deletes app.yaml from the bucket). The -r option runs the command recursively on directories.
+
+To verify that the bucket is now in sync with your local changes, list the files in the bucket again:
+gsutil ls gs://${BUCKET}/\*
+
+Task 6. Make objects public
+To allow public access to all files under the endpointslambda folder in your bucket, execute the following command:
+gsutil -m acl set -R -a public-read gs://${BUCKET}
+
+BUCKET = qwiklabs-gcp-03-7071dcb8bbac-bucket
+
+http://storage.googleapis.com/<your-bucket-name>/endpointslambda/old.txt
+
+http://storage.googleapis.com/qwiklabs-gcp-03-7071dcb8bbac-bucket/endpointslambda/old.txt
+
+Task 7. Copy with different storage class
+Next, copy a file with Nearline storage class instead of the bucket's default Multi-regional storage class:
+gsutil cp -s nearline ghcn/ghcn_on_bq.ipynb gs://${BUCKET}
+Copie
+
+Task 8. Check storage classes
+Run the following to check the storage classes and view other detailed information about the objects in your bucket:
+gsutil ls -Lr gs://${BUCKET} | more
+Copied!
+Press the space key to continue viewing the rest of the command's output.
+The output shows that the ghcn_on_bq.ipynb object has NEARLINE storage class while the other objects have MULTI_REGIONAL storage class.
+
+Task 9. Delete your bucket
+Before deleting a bucket, you must first delete all objects in the bucket. To delete all objects, execute the following command:
+gsutil rm -rf gs://${BUCKET}/\*
+
+Now delete the bucket:
+gsutil rb gs://${BUCKET}
+
+/////////////
+
+Welcome to Cloud Shell! Type "help" to get started.
+Your Cloud Platform project in this session is set to qwiklabs-gcp-03-7071dcb8bbac.
+Use `gcloud config set project [PROJECT_ID]` to change to a different project.
+student_04_775026ee8fe1@cloudshell:~ (qwiklabs-gcp-03-7071dcb8bbac)$
+student_04_775026ee8fe1@cloudshell:~ (qwiklabs-gcp-03-7071dcb8bbac)$
+student_04_775026ee8fe1@cloudshell:~ (qwiklabs-gcp-03-7071dcb8bbac)$ git clone https://github.com/GoogleCloudPlatform/training-data-analyst
+Cloning into 'training-data-analyst'...
+remote: Enumerating objects: 65890, done.
+remote: Counting objects: 100% (63/63), done.
+remote: Compressing objects: 100% (37/37), done.
+Receiving objects: 24% (15833/65890), 186.48 MiB | 14.85 MiB/s
+Receiving objects: 25% (16775/65890), 271.12 MiB | 15.73 MiB/s
+remote: Total 65890 (delta 45), reused 26 (delta 26), pack-reused 65827 (from 2)
+Receiving objects: 100% (65890/65890), 698.52 MiB | 15.01 MiB/s, done.
+Resolving deltas: 100% (42139/42139), done.
+Updating files: 100% (12900/12900), done.
+student_04_775026ee8fe1@cloudshell:~ (qwiklabs-gcp-03-7071dcb8bbac)$ PROJECT_ID=`gcloud config get-value project`
+BUCKET=${PROJECT_ID}-bucket
+Your active configuration is: [cloudshell-9293]
+student_04_775026ee8fe1@cloudshell:~ (qwiklabs-gcp-03-7071dcb8bbac)$ ls
+README-cloudshell.txt training-data-analyst
+student_04_775026ee8fe1@cloudshell:~ (qwiklabs-gcp-03-7071dcb8bbac)$ cd training-data-analyst/blogs/
+student_04_775026ee8fe1@cloudshell:~/training-data-analyst/blogs (qwiklabs-gcp-03-7071dcb8bbac)$ ls
+babyweight df_linear_opt inference predictions_to_ml_engine
+babyweight_keras endpointslambda integrated_gradients rl-on-gcp
+babyweight_tft en.md landsat serving_embed
+batch_normalization explainable_ai lightning sklearn
+batch_predictions feature_column_normalization microservices-demo-1 sme_academy
+beamadvent form_parser ncaa speeches
+bigquery_datascience gcloudprojects nexrad2 t2t
+bitcoin_network gcp_forecasting next-1.md textclassification
+bqblog ghcn next.md tf_dataflow_serving
+bqml goes16 pandas-pvtkey timeseries
+dataflow_r housing_prices pandas_to_beam windmills
+dataflowsql hparam popdensity
+student_04_775026ee8fe1@cloudshell:~/training-data-analyst/blogs (qwiklabs-gcp-03-7071dcb8bbac)$ gsutil mb -c multi_regional gs://${BUCKET}
+Creating gs://qwiklabs-gcp-03-7071dcb8bbac-bucket/...
+student_04_775026ee8fe1@cloudshell:~/training-data-analyst/blogs (qwiklabs-gcp-03-7071dcb8bbac)$ gsutil -m cp -r endpointslambda gs://${BUCKET}
+Copying file://endpointslambda/aeflex-endpoints/requirements.txt [Content-Type=text/plain]...
+Copying file://endpointslambda/lambdafunctioninline.py [Content-Type=text/x-python]...
+Copying file://endpointslambda/aeflex-endpoints/openapi.yaml [Content-Type=application/yaml]...
+Copying file://endpointslambda/aeflex-endpoints/main.py [Content-Type=text/x-python]...
+Copying file://endpointslambda/Apache2_0License.txt [Content-Type=text/plain]...
+Copying file://endpointslambda/aeflex-endpoints/app.yaml [Content-Type=application/yaml]...
+Copying file://endpointslambda/README.md [Content-Type=text/markdown]...
+
+- [7/7 files][ 17.9 KiB/ 17.9 KiB] 100% Done  
+   Operation completed over 7 objects/17.9 KiB.  
+   student_04_775026ee8fe1@cloudshell:~/training-data-analyst/blogs (qwiklabs-gcp-03-7071dcb8bbac)$ ls
+  babyweight bqblog feature_column_normalization inference next.md sme_academy
+  babyweight_keras bqml form_parser integrated_gradients pandas-pvtkey speeches
+  babyweight_tft dataflow_r gcloudprojects landsat pandas_to_beam t2t
+  batch_normalization dataflowsql gcp_forecasting lightning popdensity textclassification
+  batch_predictions df_linear_opt ghcn microservices-demo-1 predictions_to_ml_engine tf_dataflow_serving
+  beamadvent endpointslambda goes16 ncaa rl-on-gcp timeseries
+  bigquery_datascience en.md housing_prices nexrad2 serving_embed windmills
+  bitcoin_network explainable_ai hparam next-1.md sklearn
+  student_04_775026ee8fe1@cloudshell:~/training-data-analyst/blogs (qwiklabs-gcp-03-7071dcb8bbac)$ pwd
+  /home/student_04_775026ee8fe1/training-data-analyst/blogs
+  student_04_775026ee8fe1@cloudshell:~/training-data-analyst/blogs (qwiklabs-gcp-03-7071dcb8bbac)$ ll
+  total 252
+  drwxrwxr-x 46 student_04_775026ee8fe1 student_04_775026ee8fe1 4096 Apr 21 16:00 ./
+  drwxrwxr-x 12 student_04_775026ee8fe1 student_04_775026ee8fe1 4096 Apr 21 16:00 ../
+  drwxrwxr-x 4 student_04_775026ee8fe1 student_04_775026ee8fe1 4096 Apr 21 16:00 babyweight/
+  drwxrwxr-x 3 student_04_775026ee8fe1 student_04_775026ee8fe1 4096 Apr 21 16:00 babyweight_keras/
+  drwxrwxr-x 2 student_04_775026ee8fe1 student_04_775026ee8fe1 4096 Apr 21 16:00 babyweight_tft/
+  drwxrwxr-x 3 student_04_775026ee8fe1 student_04_775026ee8fe1 4096 Apr 21 16:00 batch_normalization/
+  drwxrwxr-x 2 student_04_775026ee8fe1 student_04_775026ee8fe1 4096 Apr 21 16:00 batch_predictions/
+  drwxrwxr-x 2 student_04_775026ee8fe1 student_04_775026ee8fe1 4096 Apr 21 16:00 beamadvent/
+  drwxrwxr-x 2 student_04_775026ee8fe1 student_04_775026ee8fe1 4096 Apr 21 16:00 bigquery_datascience/
+  drwxrwxr-x 2 student_04_775026ee8fe1 student_04_775026ee8fe1 4096 Apr 21 16:00 bitcoin_network/
+  drwxrwxr-x 3 student_04_775026ee8fe1 student_04_775026ee8fe1 4096 Apr 21 16:00 bqblog/
+  drwxrwxr-x 2 student_04_775026ee8fe1 student_04_775026ee8fe1 4096 Apr 21 16:00 bqml/
+  drwxrwxr-x 3 student_04_775026ee8fe1 student_04_775026ee8fe1 4096 Apr 21 16:00 dataflow_r/
+  drwxrwxr-x 3 student_04_775026ee8fe1 student_04_775026ee8fe1 4096 Apr 21 16:00 dataflowsql/
+  drwxrwxr-x 2 student_04_775026ee8fe1 student_04_775026ee8fe1 4096 Apr 21 16:00 df_linear_opt/
+  drwxrwxr-x 3 student_04_775026ee8fe1 student_04_775026ee8fe1 4096 Apr 21 16:00 endpointslambda/
+  -rw-rw-r-- 1 student_04_775026ee8fe1 student_04_775026ee8fe1 9511 Apr 21 16:00 en.md
+  drwxrwxr-x 2 student_04_775026ee8fe1 student_04_775026ee8fe1 4096 Apr 21 16:00 explainable_ai/
+  drwxrwxr-x 4 student_04_775026ee8fe1 student_04_775026ee8fe1 4096 Apr 21 16:00 feature_column_normalization/
+  drwxrwxr-x 2 student_04_775026ee8fe1 student_04_775026ee8fe1 4096 Apr 21 16:00 form_parser/
+  drwxrwxr-x 2 student_04_775026ee8fe1 student_04_775026ee8fe1 4096 Apr 21 16:00 gcloudprojects/
+  drwxrwxr-x 3 student_04_775026ee8fe1 student_04_775026ee8fe1 4096 Apr 21 16:00 gcp_forecasting/
+  drwxrwxr-x 2 student_04_775026ee8fe1 student_04_775026ee8fe1 4096 Apr 21 16:00 ghcn/
+  drwxrwxr-x 4 student_04_775026ee8fe1 student_04_775026ee8fe1 4096 Apr 21 16:00 goes16/
+  drwxrwxr-x 3 student_04_775026ee8fe1 student_04_775026ee8fe1 4096 Apr 21 16:00 housing_prices/
+  drwxrwxr-x 3 student_04_775026ee8fe1 student_04_775026ee8fe1 4096 Apr 21 16:00 hparam/
+  drwxrwxr-x 4 student_04_775026ee8fe1 student_04_775026ee8fe1 4096 Apr 21 16:00 inference/
+  drwxrwxr-x 3 student_04_775026ee8fe1 student_04_775026ee8fe1 4096 Apr 21 16:00 integrated_gradients/
+  drwxrwxr-x 2 student_04_775026ee8fe1 student_04_775026ee8fe1 4096 Apr 21 16:00 landsat/
+  drwxrwxr-x 3 student_04_775026ee8fe1 student_04_775026ee8fe1 4096 Apr 21 16:00 lightning/
+  drwxrwxr-x 9 student_04_775026ee8fe1 student_04_775026ee8fe1 4096 Apr 21 16:00 microservices-demo-1/
+  drwxrwxr-x 3 student_04_775026ee8fe1 student_04_775026ee8fe1 4096 Apr 21 16:00 ncaa/
+  drwxrwxr-x 4 student_04_775026ee8fe1 student_04_775026ee8fe1 4096 Apr 21 16:00 nexrad2/
+  -rw-rw-r-- 1 student_04_775026ee8fe1 student_04_775026ee8fe1 24962 Apr 21 16:00 next-1.md
+  -rw-rw-r-- 1 student_04_775026ee8fe1 student_04_775026ee8fe1 24962 Apr 21 16:00 next.md
+  drwxrwxr-x 3 student_04_775026ee8fe1 student_04_775026ee8fe1 4096 Apr 21 16:00 pandas-pvtkey/
+  drwxrwxr-x 2 student_04_775026ee8fe1 student_04_775026ee8fe1 4096 Apr 21 16:00 pandas_to_beam/
+  drwxrwxr-x 2 student_04_775026ee8fe1 student_04_775026ee8fe1 4096 Apr 21 16:00 popdensity/
+  drwxrwxr-x 3 student_04_775026ee8fe1 student_04_775026ee8fe1 4096 Apr 21 16:00 predictions_to_ml_engine/
+  drwxrwxr-x 4 student_04_775026ee8fe1 student_04_775026ee8fe1 4096 Apr 21 16:00 rl-on-gcp/
+  drwxrwxr-x 2 student_04_775026ee8fe1 student_04_775026ee8fe1 4096 Apr 21 16:00 serving_embed/
+  drwxrwxr-x 3 student_04_775026ee8fe1 student_04_775026ee8fe1 4096 Apr 21 16:00 sklearn/
+  drwxrwxr-x 4 student_04_775026ee8fe1 student_04_775026ee8fe1 4096 Apr 21 16:00 sme_academy/
+  drwxrwxr-x 2 student_04_775026ee8fe1 student_04_775026ee8fe1 4096 Apr 21 16:00 speeches/
+  drwxrwxr-x 2 student_04_775026ee8fe1 student_04_775026ee8fe1 4096 Apr 21 16:00 t2t/
+  drwxrwxr-x 3 student_04_775026ee8fe1 student_04_775026ee8fe1 4096 Apr 21 16:00 textclassification/
+  drwxrwxr-x 6 student_04_775026ee8fe1 student_04_775026ee8fe1 4096 Apr 21 16:00 tf_dataflow_serving/
+  drwxrwxr-x 3 student_04_775026ee8fe1 student_04_775026ee8fe1 4096 Apr 21 16:00 timeseries/
+  drwxrwxr-x 2 student_04_775026ee8fe1 student_04_775026ee8fe1 4096 Apr 21 16:00 windmills/
+  student_04_775026ee8fe1@cloudshell:~/training-data-analyst/blogs (qwiklabs-gcp-03-7071dcb8bbac)$ gsutil ls gs://${BUCKET}/*
+gs://qwiklabs-gcp-03-7071dcb8bbac-bucket/endpointslambda/Apache2_0License.txt
+gs://qwiklabs-gcp-03-7071dcb8bbac-bucket/endpointslambda/README.md
+gs://qwiklabs-gcp-03-7071dcb8bbac-bucket/endpointslambda/lambdafunctioninline.py
+gs://qwiklabs-gcp-03-7071dcb8bbac-bucket/endpointslambda/aeflex-endpoints/
+student_04_775026ee8fe1@cloudshell:~/training-data-analyst/blogs (qwiklabs-gcp-03-7071dcb8bbac)$ mv endpointslambda/Apache2_0License.txt endpointslambda/old.txt
+  student_04_775026ee8fe1@cloudshell:~/training-data-analyst/blogs (qwiklabs-gcp-03-7071dcb8bbac)$ rm endpointslambda/aeflex-endpoints/app.yaml
+  student_04_775026ee8fe1@cloudshell:~/training-data-analyst/blogs (qwiklabs-gcp-03-7071dcb8bbac)$
+  student_04_775026ee8fe1@cloudshell:~/training-data-analyst/blogs (qwiklabs-gcp-03-7071dcb8bbac)$ gsutil -m rsync -d -r endpointslambda gs://${BUCKET}/endpointslambda
+Building synchronization state...
+Starting synchronization...
+Copying mtime from src to dst for gs://qwiklabs-gcp-03-7071dcb8bbac-bucket/endpointslambda/README.md
+Removing gs://qwiklabs-gcp-03-7071dcb8bbac-bucket/endpointslambda/aeflex-endpoints/app.yaml
+Removing gs://qwiklabs-gcp-03-7071dcb8bbac-bucket/endpointslambda/Apache2_0License.txt
+Copying mtime from src to dst for gs://qwiklabs-gcp-03-7071dcb8bbac-bucket/endpointslambda/aeflex-endpoints/openapi.yaml
+Copying mtime from src to dst for gs://qwiklabs-gcp-03-7071dcb8bbac-bucket/endpointslambda/aeflex-endpoints/requirements.txt
+Copying mtime from src to dst for gs://qwiklabs-gcp-03-7071dcb8bbac-bucket/endpointslambda/aeflex-endpoints/main.py
+Copying mtime from src to dst for gs://qwiklabs-gcp-03-7071dcb8bbac-bucket/endpointslambda/lambdafunctioninline.py
+Copying file://endpointslambda/old.txt [Content-Type=text/plain]...
+student_04_775026ee8fe1@cloudshell:~/training-data-analyst/blogs (qwiklabs-gcp-03-7071dcb8bbac)$
+  student_04_775026ee8fe1@cloudshell:~/training-data-analyst/blogs (qwiklabs-gcp-03-7071dcb8bbac)$
+  student_04_775026ee8fe1@cloudshell:~/training-data-analyst/blogs (qwiklabs-gcp-03-7071dcb8bbac)$ gsutil ls gs://${BUCKET}/*
+gs://qwiklabs-gcp-03-7071dcb8bbac-bucket/endpointslambda/README.md
+gs://qwiklabs-gcp-03-7071dcb8bbac-bucket/endpointslambda/lambdafunctioninline.py
+gs://qwiklabs-gcp-03-7071dcb8bbac-bucket/endpointslambda/old.txt
+gs://qwiklabs-gcp-03-7071dcb8bbac-bucket/endpointslambda/aeflex-endpoints/
+student_04_775026ee8fe1@cloudshell:~/training-data-analyst/blogs (qwiklabs-gcp-03-7071dcb8bbac)$ gsutil -m acl set -R -a public-read gs://${BUCKET}Setting ACL on gs://qwiklabs-gcp-03-7071dcb8bbac-bucket/endpointslambda/README.md#1745251328666962...
+Setting ACL on gs://qwiklabs-gcp-03-7071dcb8bbac-bucket/endpointslambda/old.txt#1745251432079496...
+Setting ACL on gs://qwiklabs-gcp-03-7071dcb8bbac-bucket/endpointslambda/aeflex-endpoints/main.py#1745251328483997...
+Setting ACL on gs://qwiklabs-gcp-03-7071dcb8bbac-bucket/endpointslambda/aeflex-endpoints/openapi.yaml#1745251328637097...
+Setting ACL on gs://qwiklabs-gcp-03-7071dcb8bbac-bucket/endpointslambda/aeflex-endpoints/requirements.txt#1745251328483754...
+Setting ACL on gs://qwiklabs-gcp-03-7071dcb8bbac-bucket/endpointslambda/lambdafunctioninline.py#1745251328611128...
+/ [6/6 objects] 100% Done                                                       
+Operation completed over 6 objects.                                              
+student_04_775026ee8fe1@cloudshell:~/training-data-analyst/blogs (qwiklabs-gcp-03-7071dcb8bbac)$
+  student_04_775026ee8fe1@cloudshell:~/training-data-analyst/blogs (qwiklabs-gcp-03-7071dcb8bbac)$
+  student_04_775026ee8fe1@cloudshell:~/training-data-analyst/blogs (qwiklabs-gcp-03-7071dcb8bbac)$ gsutil cp -s nearline ghcn/ghcn_on_bq.ipynb gs://${BUCKET}
+  Copying file://ghcn/ghcn_on_bq.ipynb [Content-Type=application/octet-stream]...
+- [1 files][957.2 KiB/957.2 KiB]  
+  Operation completed over 1 objects/957.2 KiB.  
+  student_04_775026ee8fe1@cloudshell:~/training-data-analyst/blogs (qwiklabs-gcp-03-7071dcb8bbac)$
+  student_04_775026ee8fe1@cloudshell:~/training-data-analyst/blogs (qwiklabs-gcp-03-7071dcb8bbac)$ gsutil cp -s nearline ghcn/ghcn_on_bq.ipynb gs://$
+  {BUCKET}
+  Copying file://ghcn/ghcn_on_bq.ipynb [Content-Type=application/octet-stream]...
+- [1 files][957.2 KiB/957.2 KiB]  
+  Operation completed over 1 objects/957.2 KiB.  
+  student_04_775026ee8fe1@cloudshell:~/training-data-analyst/blogs (qwiklabs-gcp-03-7071dcb8bbac)$ gsutil ls -Lr gs://${BUCKET} | more
+  gs://qwiklabs-gcp-03-7071dcb8bbac-bucket/ghcn_on_bq.ipynb:
+  Creation time: Mon, 21 Apr 2025 16:08:12 GMT
+  Update time: Mon, 21 Apr 2025 16:08:12 GMT
+  Storage class: NEARLINE
+  Content-Length: 980176
+  Content-Type: application/octet-stream
+  Hash (crc32c): JR3oMQ==
+  Hash (md5): z3PcTzws/ThQzOPwHdWtxQ==
+  ETag: CKqmt5nB6YwDEAE=
+  Generation: 1745251692565290
+  Metageneration: 1
+  ACL: [
+  {
+  "entity": "project-owners-775522005180",
+  "projectTeam": {
+  "projectNumber": "775522005180",
+  "team": "owners"
+  },
+  "role": "OWNER"
+  },
+  {
+  "entity": "project-editors-775522005180",
+  "projectTeam": {
+  "projectNumber": "775522005180",
+  "team": "editors"
+  },
+  "role": "OWNER"
+  },
+  {
+  "entity": "project-viewers-775522005180",
+  "projectTeam": {
+  "projectNumber": "775522005180",
+  "team": "viewers"
+  },
+  "role": "READER"
+  },
+  {
+  "email": "student-04-775026ee8fe1@qwiklabs.net",
+  "entity": "user-student-04-775026ee8fe1@qwiklabs.net",
+  "role": "OWNER"
+  }
+  ]
+  gs://qwiklabs-gcp-03-7071dcb8bbac-bucket/endpointslambda/:
+  gs://qwiklabs-gcp-03-7071dcb8bbac-bucket/endpointslambda/README.md:
+  Creation time: Mon, 21 Apr 2025 16:02:08 GMT
+  Update time: Mon, 21 Apr 2025 16:05:05 GMT
+  Storage class: MULTI_REGIONAL
+  Content-Length: 452
+  Content-Type: text/markdown
+  Metadata:  
+   goog-reserved-file-mtime:1745251205
+  Hash (crc32c): OWoQZg==
+  Hash (md5): MszqqorgqxNJUlOc5CiHfg==
+  ETag: CNLa9Ou/6YwDEAM=
+  Generation: 1745251328666962
+  Metageneration: 3
+  ACL: [
+  {
+  "email": "student-04-775026ee8fe1@qwiklabs.net",
+  "entity": "user-student-04-775026ee8fe1@qwiklabs.net",
+  "role": "OWNER"
+  },
+  {
+  "entity": "allUsers",
+  "role": "READER"
+  }
+  ]
+  gs://qwiklabs-gcp-03-7071dcb8bbac-bucket/endpointslambda/lambdafunctioninline.py:
+  Creation time: Mon, 21 Apr 2025 16:02:08 GMT
+  Update time: Mon, 21 Apr 2025 16:05:05 GMT
+  Storage class: MULTI_REGIONAL
+  Content-Length: 2434
+  Content-Type: text/x-python
+  Metadata:  
+   goog-reserved-file-mtime:1745251205
+  Hash (crc32c): c4ox+A==
+  Hash (md5): +dQecQpjDPSJwvfksCA+Bw==
+  ETag: CLim8eu/6YwDEAM=
+  Generation: 1745251328611128
+  Metageneration: 3
+  ACL: [
+  {
+  "email": "student-04-775026ee8fe1@qwiklabs.net",
+  "entity": "user-student-04-775026ee8fe1@qwiklabs.net",
+  "role": "OWNER"
+  },
+  {
+  "entity": "allUsers",
+  "role": "READER"
+  }
+  ]
+  gs://qwiklabs-gcp-03-7071dcb8bbac-bucket/endpointslambda/old.txt:
+  Creation time: Mon, 21 Apr 2025 16:03:52 GMT
+  Update time: Mon, 21 Apr 2025 16:05:05 GMT
+  Storage class: MULTI_REGIONAL
+  Content-Length: 10178
+  Content-Type: text/plain
+  Metadata:  
+   goog-reserved-file-mtime:1745251205
+  Hash (crc32c): FpoKtQ==
+  Hash (md5): xMAXfV7kNUJ3HsXjcpx/eg==
+  ETag: CIjBnJ3A6YwDEAI=
+  Generation: 1745251432079496
+  Metageneration: 2
+  ACL: [
+  {
+  "email": "student-04-775026ee8fe1@qwiklabs.net",
+  "entity": "user-student-04-775026ee8fe1@qwiklabs.net",
+  "role": "OWNER"
+  },
+  {
+  "entity": "allUsers",
+  "role": "READER"
+  }
+  ]
+
+gs://qwiklabs-gcp-03-7071dcb8bbac-bucket/endpointslambda/aeflex-endpoints/:
+gs://qwiklabs-gcp-03-7071dcb8bbac-bucket/endpointslambda/aeflex-endpoints/main.py:
+Creation time: Mon, 21 Apr 2025 16:02:08 GMT
+Update time: Mon, 21 Apr 2025 16:05:05 GMT
+Storage class: MULTI_REGIONAL
+Content-Length: 2166
+Content-Type: text/x-python
+Metadata:  
+ goog-reserved-file-mtime:1745251205
+Hash (crc32c): 9pPt1A==
+Hash (md5): fEngI41cjBhCEJ5rGmYVOg==
+ETag: CJ3F6eu/6YwDEAM=
+Generation: 1745251328483997
+Metageneration: 3
+ACL: [
+{
+"email": "student-04-775026ee8fe1@qwiklabs.net",
+"entity": "user-student-04-775026ee8fe1@qwiklabs.net",
+"role": "OWNER"
+},
+{
+"entity": "allUsers",
+"role": "READER"
+}
+]
+gs://qwiklabs-gcp-03-7071dcb8bbac-bucket/endpointslambda/aeflex-endpoints/openapi.yaml:
+Creation time: Mon, 21 Apr 2025 16:02:08 GMT
+Update time: Mon, 21 Apr 2025 16:05:05 GMT
+Storage class: MULTI_REGIONAL
+Content-Length: 2084
+Content-Type: application/yaml
+Metadata:  
+ goog-reserved-file-mtime:1745251205
+Hash (crc32c): ze6blA==
+Hash (md5): gm3iiW2RGOKeTodLv0LEow==
+ETag: CKnx8uu/6YwDEAM=
+Generation: 1745251328637097
+Metageneration: 3
+ACL: [
+{
+"email": "student-04-775026ee8fe1@qwiklabs.net",
+"entity": "user-student-04-775026ee8fe1@qwiklabs.net",
+"role": "OWNER"
+},
+{
+"entity": "allUsers",
+"role": "READER"
+}
+]
+gs://qwiklabs-gcp-03-7071dcb8bbac-bucket/endpointslambda/aeflex-endpoints/requirements.txt:
+Creation time: Mon, 21 Apr 2025 16:02:08 GMT
+Update time: Mon, 21 Apr 2025 16:05:05 GMT
+Storage class: MULTI_REGIONAL
+Content-Length: 87
+Content-Type: text/plain
+Metadata:  
+ goog-reserved-file-mtime:1745251205
+Hash (crc32c): IHVETg==
+Hash (md5): FtKjGEzFGKupcfkUhro0SQ==
+ETag: CKrD6eu/6YwDEAM=
+Generation: 1745251328483754
+Metageneration: 3
+ACL: [
+{
+student_04_775026ee8fe1@cloudshell:~/training-data-analyst/blogs (qwiklabs-gcp-03-7071dcb8bbac)$ gsutil rm -rf gs://${BUCKET}/\*
+Removing gs://qwiklabs-gcp-03-7071dcb8bbac-bucket/ghcn_on_bq.ipynb#1745251692565290...
+Removing gs://qwiklabs-gcp-03-7071dcb8bbac-bucket/endpointslambda/README.md#1745251328666962...
+Removing gs://qwiklabs-gcp-03-7071dcb8bbac-bucket/endpointslambda/aeflex-endpoints/main.py#1745251328483997...
+Removing gs://qwiklabs-gcp-03-7071dcb8bbac-bucket/endpointslambda/aeflex-endpoints/openapi.yaml#1745251328637097...
+/ [4 objects]  
+==> NOTE: You are performing a sequence of gsutil operations that may
+run significantly faster if you instead use gsutil -m rm ... Please
+see the -m section under "gsutil help options" for further information
+about when gsutil -m can be advantageous.
+
+Removing gs://qwiklabs-gcp-03-7071dcb8bbac-bucket/endpointslambda/aeflex-endpoints/requirements.txt#1745251328483754...
+Removing gs://qwiklabs-gcp-03-7071dcb8bbac-bucket/endpointslambda/lambdafunctioninline.py#1745251328611128...
+Removing gs://qwiklabs-gcp-03-7071dcb8bbac-bucket/endpointslambda/old.txt#1745251432079496...
+/ [7 objects]  
+Operation completed over 7 objects.  
+student_04_775026ee8fe1@cloudshell:~/training-data-analyst/blogs (qwiklabs-gcp-03-7071dcb8bbac)$
+student_04_775026ee8fe1@cloudshell:~/training-data-analyst/blogs (qwiklabs-gcp-03-7071dcb8bbac)$
+student_04_775026ee8fe1@cloudshell:~/training-data-analyst/blogs (qwiklabs-gcp-03-7071dcb8bbac)$ gsutil rb gs://${BUCKET}
+Removing gs://qwiklabs-gcp-03-7071dcb8bbac-bucket/...
+student_04_775026ee8fe1@cloudshell:~/training-data-analyst/blogs (qwiklabs-gcp-03-7071dcb8bbac)$
+
+////
+BigQuery :
+
+To examine the schema of the Shakespeare table in the samples dataset, run:
+
+bq show bigquery-public-data:samples.shakespeare
+
+In this command you're doing the following:
+
+bq to invoke the BigQuery command line tool
+show is the action
+Then you're listing the name of the project:public dataset.table in BigQuery that you want to see.
+
+For example, the following call to bq help retrieves information about the query command:
+bq help query
+
+To see a list of all of the commands bq uses, run just bq help.
+
+Task 3. Run a query
+Now you'll run a query to see how many times the substring "raisin" appears in Shakespeare's works.
+
+To run a query, run the command bq query "[SQL_STATEMENT]":
+Escape any quotation marks inside the [SQL_STATEMENT] with a \ mark, or
+
+Use a different quotation mark type than the surrounding marks ("versus").
+
+Run the following standard SQL query in Cloud Shell to count the number of times that the substring "raisin" appears in all of Shakespeare's works:
+bq query --use_legacy_sql=false \
+'SELECT
+word,
+SUM(word_count) AS count
+FROM
+`bigquery-public-data`.samples.shakespeare
+WHERE
+word LIKE "%raisin%"
+GROUP BY
+word'
+Copied!
+In this command:
+
+--use_legacy_sql=false makes standard SQL the default query syntax.
+
+bq query --use_legacy_sql=false \
+'SELECT
+word
+FROM
+`bigquery-public-data`.samples.shakespeare
+WHERE
+word = "huzzah"'
+
+Task 4. Create a new table
+Now create your own table. Every table is stored inside a dataset. A dataset is a group of resources, such as tables and views.
+
+Create a new dataset
+Use the bq ls command to list any existing datasets in your project:
+bq ls
+Copied!
+You will be brought back to the command line since there aren't any datasets in your project yet.
+
+Run bq ls and the bigquery-public-data Project ID to list the datasets in that specific project, followed by a colon (:):
+bq ls bigquery-public-data:
+
+Run bq ls to confirm that the dataset now appears as part of your project:
+bq ls
+
+Upload the dataset
+Before you can build the table, you need to add the dataset to your project. The custom data file you'll use contains approximately 7 MB of data about popular baby names, provided by the US Social Security Administration.
+
+Run this command to add the baby names zip file to your project, using the URL for the data file:
+curl -LO http://www.ssa.gov/OACT/babynames/names.zip
+Copied!
+List the file:
+ls
+Copied!
+You can see the name of the file added to your project.
+
+Now unzip the file:
+unzip names.zip
+Copied!
+That's a pretty big list of text files! List the files again:
+ls
+Copied!
+The bq load command creates or updates a table and loads data in a single step.
+
+You will use the bq load command to load your source file into a new table called names2010 in the babynames dataset you just created. By default, this runs synchronously, and will take a few seconds to complete.
+
+The bq load arguments you'll be running are:
+
+Create your table:
+bq load babynames.names2010 yob2010.txt name:string,gender:string,count:integer
+
+///////
+Command line execute output:
+
+Welcome to Cloud Shell! Type "help" to get started.
+Your Cloud Platform project in this session is set to qwiklabs-gcp-02-da3a9db0fa34.
+Use `gcloud config set project [PROJECT_ID]` to change to a different project.
+student_04_652c04e85063@cloudshell:~ (qwiklabs-gcp-02-da3a9db0fa34)$
+student_04_652c04e85063@cloudshell:~ (qwiklabs-gcp-02-da3a9db0fa34)$
+student_04_652c04e85063@cloudshell:~ (qwiklabs-gcp-02-da3a9db0fa34)$ bq show bigquery-public-data:samples.shakespeare
+Table bigquery-public-data:samples.shakespeare
+
+Last modified Schema Total Rows Total Bytes Expiration Time Partitioning Clustered Fields Total Logical Bytes Total Physical Bytes Labels
+
+---
+
+14 Mar 17:16:45 |- word: string (required) 164656 6432064 6432064 485656  
+ |- word_count: integer (required)  
+ |- corpus: string (required)  
+ |- corpus_date: integer (required)
+
+student_04_652c04e85063@cloudshell:~ (qwiklabs-gcp-02-da3a9db0fa34)$
+student_04_652c04e85063@cloudshell:~ (qwiklabs-gcp-02-da3a9db0fa34)$
+student_04_652c04e85063@cloudshell:~ (qwiklabs-gcp-02-da3a9db0fa34)$ bq help query
+Python script for interacting with BigQuery.
+
+USAGE: bq.py [--global_flags] <command> [--command_flags] [args]
+
+query Execute a query.
+
+                           Query should be specified on command line, or passed on stdin.
+
+                           Examples:
+                           bq query 'select count(*) from publicdata:samples.shakespeare'
+                           echo 'select count(*) from publicdata:samples.shakespeare' | bq query
+
+                           Usage:
+                           query [<sql_query>]
+
+                           To cancel a query job, run `bq cancel job_id`.
+
+                           Flags for query:
+
+                             frontend.command_query:
+                               --[no]allow_large_results: Enables larger destination table sizes for legacy SQL queries.
+                               --[no]append_table: When a destination table is specified, whether or not to append.
+                                 (default: 'false')
+                               --[no]batch: Whether to run the query in batch mode. Ignored if --priority flag is specified.
+                               --clustering_fields: Comma-separated list of field names that specifies the columns on which a table is clustered.
+                                 To remove the clustering, set an empty value.
+                               --connection_property: Connection properties;
+                                 repeat this option to specify a list of values
+                               --[no]continuous: Whether to run the query as continuous query
+                                 (default: 'false')
+                               --[no]create_session: Whether to create a new session and run the query in the sesson.
+                               --destination_kms_key: Cloud KMS key for encryption of the destination table data.
+                               --destination_schema: Schema for the destination table. Either a filename or a comma-separated list of fields in the
+                                 form name[:type].
+                                 (default: '')
+                               --destination_table: Name of destination table for query results.
+                                 (default: '')
+                               --display_name: Display name for the created scheduled query configuration.
+                                 (default: '')
+                               --[no]dry_run: Whether the query should be validated without executing.
+                               --external_table_definition: Specifies a table name and either an inline table definition or a path to a file
+                                 containing a JSON table definition to use in the query. The format is "table_name::path_to_file_with_json_def" or
+                                 "table_name::schema@format=uri@connection". For example, "--
+                                 external_table_definition=Example::/tmp/example_table_def.txt" will define a table named "Example" using the URIs
+                                 and schema encoded in example_table_def.txt.;
+                                 repeat this option to specify a list of values
+                               --[no]flatten_results: Whether to flatten nested and repeated fields in the result schema for legacy SQL queries. If
+                                 not set, the default behavior is to flatten.
+                               --job_creation_mode: <job_creation_required|job_creation_optional>: An option on job creation. Options include:
+                                 JOB_CREATION_REQUIRED
+                                 JOB_CREATION_OPTIONAL
+                                 Specifying JOB_CREATION_OPTIONAL may speed up the query if the query engine decides to bypass job creation.
+                               --job_timeout_ms: Maximum time to run the entire script.
+                               --label: A label to set on a query job. The format is "key:value";
+                                 repeat this option to specify a list of values
+                               --max_child_jobs: Maximum number of child jobs to fetch results from after executing a script.  If the number of
+                                 child jobs exceeds this limit, only the final result will be displayed.
+                                 (default: '1000')
+                                 (an integer)
+                               -n,--max_rows: How many rows to return in the result.
+                                 (default: '100')
+                                 (an integer)
+                               --max_statement_results: Maximum number of script statements to display the results for.
+                                 (default: '100')
+                                 (an integer)
+                               --maximum_billing_tier: The upper limit of billing tier for the query.
+                                 (an integer)
+                               --maximum_bytes_billed: The upper limit of bytes billed for the query.
+                                 (an integer)
+                               --min_completion_ratio: [Experimental] The minimum fraction of data that must be scanned before a query returns. If
+                                 not set, the default server value (1.0) will be used.
+                                 (a number in the range [0, 1.0])
+                               --[no]no_auto_scheduling: Create a scheduled query configuration with automatic scheduling disabled.
+                                 (default: 'false')
+                               --parameter: Either a file containing a JSON list of query parameters, or a query parameter in the form
+                                 "name:type:value". An empty name produces a positional parameter. The type may be omitted to assume STRING:
+                                 name::value or ::value. The value "NULL" produces a null value.;
+                                 repeat this option to specify a list of values
+                               --priority: <HIGH|INTERACTIVE|BATCH>: Query priority. If not specified, priority is determined using the --batch
+                                 flag. Options include:
+                                 HIGH (only available for whitelisted reservations)
+                                 INTERACTIVE
+                                 BATCH
+                               --range_partitioning: Enables range partitioning on the table. The format should be "field,start,end,interval". The
+                                 table will be partitioned based on the value of the field. Field must be a top-level, non-repeated INT64 field.
+                                 Start, end, and interval are INT64 values defining the ranges.
+                               --[no]replace: If true, erase existing contents before loading new data.
+                                 (default: 'false')
+                               --request_id: The request_id to use for the jobs.query request. Only valid when used in combination with --rpc.
+                               --[no]require_cache: Whether to only run the query if it is already cached.
+                               --[no]require_partition_filter: Whether to require partition filter for queries over this table. Only apply to
+                                 partitioned table.
+                               --[no]rpc: If true, use rpc-style query API instead of jobs.insert().
+                                 (default: 'false')
+                               --schedule: Scheduled query schedule. If non-empty, this query requests could create a scheduled query understand
+                                 the customer project. See https://cloud.google.com/appengine/docs/flexible/python/scheduling-jobs-with-cron-
+                                 yaml#the_schedule_format for the schedule format
+                               --schema_update_option: Can be specified when append to a table, or replace a table partition. When specified, the
+                                 schema of the destination table will be updated with the schema of the new data. One or more of the following
+                                 options can be specified:
+                                 ALLOW_FIELD_ADDITION: allow new fields to be added
+                                 ALLOW_FIELD_RELAXATION: allow relaxing required fields to nullable;
+                                 repeat this option to specify a list of values
+                               --script_statement_byte_budget: Maximum bytes that can be billed for any statement in a script.
+                               --script_statement_timeout_ms: Maximum time to complete each statement in a script.
+                               --session_id: An existing session id where the query will be run.
+                               -s,--start_row: First row to return in the result.
+                                 (default: '0')
+                                 (an integer)
+                               --target_dataset: Target dataset used to create scheduled query.
+                               --time_partitioning_expiration: Enables time based partitioning on the table and sets the number of seconds for
+                                 which to keep the storage for the partitions in the table. The storage in a partition will have an expiration time
+                                 of its partition time plus this value.
+                                 (an integer)
+                               --time_partitioning_field: Enables time based partitioning on the table and the table will be partitioned based on
+                                 the value of this field. If time based partitioning is enabled without this value, the table will be partitioned
+                                 based on the loading time.
+                               --time_partitioning_type: Enables time based partitioning on the table and set the type. The default value is DAY,
+                                 which will generate one partition per day. Other supported values are HOUR, MONTH, and YEAR.
+                               --udf_resource: The URI or local filesystem path of a code file to load and evaluate immediately as a User-Defined
+                                 Function resource.;
+                                 repeat this option to specify a list of values
+                               --[no]use_cache: Whether to use the query cache to avoid rerunning cached queries.
+                               --[no]use_legacy_sql: The choice of using Legacy SQL for the query is optional. If not specified, the server will
+                                 automatically determine the dialect based on query information, such as dialect prefixes. If no prefixes are
+                                 found, it will default to Legacy SQL.
+
+                             frontend.flags:
+                               --reservation_id: Reservation ID used when executing the job. Reservation should be in theformat of
+                                 project_id:reservation_id, project_id:location.reservation_id,or reservation_id
+
+                             absl.flags:
+                               --flagfile: Insert flag definitions from the given file into the command line.
+                                 (default: '')
+                               --undefok: comma-separated list of flag names that it is okay to specify on the command line even if the program
+                                 does not define a flag with that name.  IMPORTANT: flags in this list that have arguments MUST use the
+                                 --flag=value format.
+                                 (default: '')
+
+Run 'bq.py --help' to get help for global flags.
+Run 'bq.py help' to see the list of available commands.
+student_04_652c04e85063@cloudshell:~ (qwiklabs-gcp-02-da3a9db0fa34)$
+student_04_652c04e85063@cloudshell:~ (qwiklabs-gcp-02-da3a9db0fa34)$ bq query --use_legacy_sql=false \
+'SELECT
+word,
+SUM(word_count) AS count
+FROM
+`bigquery-public-data`.samples.shakespeare
+WHERE
+word LIKE "%raisin%"
+GROUP BY
+word'
++---------------+-------+
+| word | count |
++---------------+-------+
+| praising | 8 |
+| Praising | 4 |
+| raising | 5 |
+| dispraising | 2 |
+| dispraisingly | 1 |
+| raisins | 1 |
++---------------+-------+
+student_04_652c04e85063@cloudshell:~ (qwiklabs-gcp-02-da3a9db0fa34)$
+student_04_652c04e85063@cloudshell:~ (qwiklabs-gcp-02-da3a9db0fa34)$ bq query --use_legacy_sql=false \
+'SELECT
+word
+FROM
+`bigquery-public-data`.samples.shakespeare
+WHERE
+word = "huzzah"'
+student_04_652c04e85063@cloudshell:~ (qwiklabs-gcp-02-da3a9db0fa34)$
+student_04_652c04e85063@cloudshell:~ (qwiklabs-gcp-02-da3a9db0fa34)$ bq ls
+student_04_652c04e85063@cloudshell:~ (qwiklabs-gcp-02-da3a9db0fa34)$ bq ls bigquery-public-data:
+datasetId
+
+---
+
+america_health_rankings  
+ austin_311  
+ austin_bikeshare  
+ austin_crime  
+ austin_incidents  
+ austin_waste  
+ baseball  
+ bbc_news  
+ bigqueryml_ncaa  
+ bitcoin_blockchain  
+ blackhole_database  
+ blockchain_analytics_ethereum_mainnet_us  
+ bls  
+ bls_qcew  
+ breathe  
+ broadstreet_adi  
+ catalonian_mobile_coverage  
+ catalonian_mobile_coverage_eu  
+ census_bureau_acs  
+ census_bureau_construction  
+ census_bureau_international  
+ census_bureau_usa  
+ census_opportunity_atlas  
+ census_utility  
+ cfpb_complaints  
+ chicago_crime  
+ chicago_taxi_trips  
+ clemson_dice  
+ cloud_storage_geo_index  
+ cms_codes  
+ cms_medicare  
+ cms_synthetic_patient_data_omop  
+ country_codes  
+ covid19_aha  
+ covid19_covidtracking  
+ covid19_ecdc  
+ covid19_ecdc_eu  
+ covid19_genome_sequence  
+ covid19_geotab_mobility_impact  
+ covid19_geotab_mobility_impact_eu  
+ covid19_google_mobility  
+ covid19_google_mobility_eu  
+ covid19_govt_response  
+ covid19_italy  
+ covid19_italy_eu  
+ covid19_jhu_csse  
+ covid19_jhu_csse_eu  
+ covid19_nyt  
+ covid19_open_data  
+ covid19_open_data_eu  
+student_04_652c04e85063@cloudshell:~ (qwiklabs-gcp-02-da3a9db0fa34)$ bq mk babynames
+Dataset 'qwiklabs-gcp-02-da3a9db0fa34:babynames' successfully created.
+student_04_652c04e85063@cloudshell:~ (qwiklabs-gcp-02-da3a9db0fa34)$ bq ls bigquery-public-data:
+datasetId
+
+---
+
+america_health_rankings  
+ austin_311  
+ austin_bikeshare  
+ austin_crime  
+ austin_incidents  
+ austin_waste  
+ baseball  
+ bbc_news  
+ bigqueryml_ncaa  
+ bitcoin_blockchain  
+ blackhole_database  
+ blockchain_analytics_ethereum_mainnet_us  
+ bls  
+ bls_qcew  
+ breathe  
+ broadstreet_adi  
+ catalonian_mobile_coverage  
+ catalonian_mobile_coverage_eu  
+ census_bureau_acs  
+ census_bureau_construction  
+ census_bureau_international  
+ census_bureau_usa  
+ census_opportunity_atlas  
+ census_utility  
+ cfpb_complaints  
+ chicago_crime  
+ chicago_taxi_trips  
+ clemson_dice  
+ cloud_storage_geo_index  
+ cms_codes  
+ cms_medicare  
+ cms_synthetic_patient_data_omop  
+ country_codes  
+ covid19_aha  
+ covid19_covidtracking  
+ covid19_ecdc  
+ covid19_ecdc_eu  
+ covid19_genome_sequence  
+ covid19_geotab_mobility_impact  
+ covid19_geotab_mobility_impact_eu  
+ covid19_google_mobility  
+ covid19_google_mobility_eu  
+ covid19_govt_response  
+ covid19_italy  
+ covid19_italy_eu  
+ covid19_jhu_csse  
+ covid19_jhu_csse_eu  
+ covid19_nyt  
+ covid19_open_data  
+ covid19_open_data_eu  
+student_04_652c04e85063@cloudshell:~ (qwiklabs-gcp-02-da3a9db0fa34)$ bq ls
+datasetId
+
+---
+
+babynames  
+student_04_652c04e85063@cloudshell:~ (qwiklabs-gcp-02-da3a9db0fa34)$
+student_04_652c04e85063@cloudshell:~ (qwiklabs-gcp-02-da3a9db0fa34)$
+student_04_652c04e85063@cloudshell:~ (qwiklabs-gcp-02-da3a9db0fa34)$
+student_04_652c04e85063@cloudshell:~ (qwiklabs-gcp-02-da3a9db0fa34)$ ls
+README-cloudshell.txt
+student_04_652c04e85063@cloudshell:~ (qwiklabs-gcp-02-da3a9db0fa34)$
+student_04_652c04e85063@cloudshell:~ (qwiklabs-gcp-02-da3a9db0fa34)$ curl -LO http://www.ssa.gov/OACT/babynames/names.zip
+% Total % Received % Xferd Average Speed Time Time Time Current
+Dload Upload Total Spent Left Speed
+0 0 0 0 0 0 0 0 --:--:-- --:--:-- --:--:-- 0
+100 7491k 100 7491k 0 0 8555k 0 --:--:-- --:--:-- --:--:-- 60.3M
+student_04_652c04e85063@cloudshell:~ (qwiklabs-gcp-02-da3a9db0fa34)$ ls
+names.zip README-cloudshell.txt
+student_04_652c04e85063@cloudshell:~ (qwiklabs-gcp-02-da3a9db0fa34)$ unZIP names.zip
+-bash: unZIP: command not found
+student_04_652c04e85063@cloudshell:~ (qwiklabs-gcp-02-da3a9db0fa34)$ unzip names.zip
+Archive: names.zip
+inflating: yob1880.txt  
+ inflating: yob1881.txt  
+ inflating: yob1882.txt  
+ inflating: yob1883.txt  
+ inflating: yob1884.txt  
+ inflating: yob1885.txt  
+ inflating: yob1886.txt  
+ inflating: yob1887.txt  
+ inflating: yob1888.txt  
+ inflating: yob1889.txt  
+ inflating: yob1890.txt  
+ inflating: yob1891.txt  
+ inflating: yob1892.txt  
+ inflating: yob1893.txt  
+ inflating: yob1894.txt  
+ inflating: yob1895.txt  
+ inflating: yob1896.txt  
+ inflating: yob1897.txt  
+ inflating: yob1898.txt  
+ inflating: yob1899.txt  
+ inflating: yob1900.txt  
+ inflating: yob1901.txt  
+ inflating: yob1902.txt  
+ inflating: yob1903.txt  
+ inflating: yob1904.txt  
+ inflating: yob1905.txt  
+ inflating: yob1906.txt  
+ inflating: yob1907.txt  
+ inflating: yob1908.txt  
+ inflating: yob1909.txt  
+ inflating: yob1910.txt  
+ inflating: yob1911.txt  
+ inflating: yob1912.txt  
+ inflating: yob1913.txt  
+ inflating: yob1914.txt  
+ inflating: yob1915.txt  
+ inflating: yob1916.txt  
+ inflating: yob1917.txt  
+ inflating: yob1918.txt  
+ inflating: yob1919.txt  
+ inflating: yob1920.txt  
+ inflating: yob1921.txt  
+ inflating: yob1922.txt  
+ inflating: yob1923.txt  
+ inflating: yob1924.txt  
+ inflating: yob1925.txt  
+ inflating: yob1926.txt  
+ inflating: yob1927.txt  
+ inflating: yob1928.txt  
+ inflating: yob1929.txt  
+ inflating: yob1930.txt  
+ inflating: yob1931.txt  
+ inflating: yob1932.txt  
+ inflating: yob1933.txt  
+ inflating: yob1934.txt  
+ inflating: yob1935.txt  
+ inflating: yob1936.txt  
+ inflating: yob1937.txt  
+ inflating: yob1938.txt  
+ inflating: yob1939.txt  
+ inflating: yob1940.txt  
+ inflating: yob1941.txt  
+ inflating: yob1942.txt  
+ inflating: yob1943.txt  
+ inflating: yob1944.txt  
+ inflating: yob1945.txt  
+ inflating: yob1946.txt  
+ inflating: yob1947.txt  
+ inflating: yob1948.txt  
+ inflating: yob1949.txt  
+ inflating: yob1950.txt  
+ inflating: yob1951.txt  
+ inflating: yob1952.txt  
+ inflating: yob1953.txt  
+ inflating: yob1954.txt  
+ inflating: yob1955.txt  
+ inflating: yob1956.txt  
+ inflating: yob1957.txt  
+ inflating: yob1958.txt  
+ inflating: yob1959.txt  
+ inflating: yob1960.txt  
+ inflating: yob1961.txt  
+ inflating: yob1962.txt  
+ inflating: yob1963.txt  
+ inflating: yob1964.txt  
+ inflating: yob1965.txt  
+ inflating: yob1966.txt  
+ inflating: yob1967.txt  
+ inflating: yob1968.txt  
+ inflating: yob1969.txt  
+ inflating: yob1970.txt  
+ inflating: yob1971.txt  
+ inflating: yob1972.txt  
+ inflating: yob1973.txt  
+ inflating: yob1974.txt  
+ inflating: yob1975.txt  
+ inflating: yob1976.txt  
+ inflating: yob1977.txt  
+ inflating: yob1978.txt  
+ inflating: yob1979.txt  
+ inflating: yob1980.txt  
+ inflating: yob1981.txt  
+ inflating: yob1982.txt  
+ inflating: yob1983.txt  
+ inflating: yob1984.txt  
+ inflating: yob1985.txt  
+ inflating: yob1986.txt  
+ inflating: yob1987.txt  
+ inflating: yob1988.txt  
+ inflating: yob1989.txt  
+ inflating: yob1990.txt  
+ inflating: yob1991.txt  
+ inflating: yob1992.txt  
+ inflating: yob1993.txt  
+ inflating: yob1994.txt  
+ inflating: yob1995.txt  
+ inflating: yob1996.txt  
+ inflating: yob1997.txt  
+ inflating: yob1998.txt  
+ inflating: yob1999.txt  
+ inflating: yob2000.txt  
+ inflating: yob2001.txt  
+ inflating: yob2002.txt  
+ inflating: yob2003.txt  
+ inflating: yob2004.txt  
+ inflating: yob2005.txt  
+ inflating: yob2006.txt  
+ inflating: yob2007.txt  
+ inflating: yob2008.txt  
+ inflating: yob2009.txt  
+ inflating: yob2010.txt  
+ inflating: yob2011.txt  
+ inflating: yob2012.txt  
+ inflating: yob2013.txt  
+ inflating: yob2014.txt  
+ inflating: yob2015.txt  
+ inflating: yob2016.txt  
+ inflating: yob2017.txt  
+ inflating: yob2018.txt  
+ inflating: yob2019.txt  
+ inflating: yob2020.txt  
+ inflating: yob2021.txt  
+ inflating: yob2022.txt  
+ inflating: yob2023.txt  
+ inflating: NationalReadMe.pdf  
+student_04_652c04e85063@cloudshell:~ (qwiklabs-gcp-02-da3a9db0fa34)$ ls
+names.zip yob1892.txt yob1907.txt yob1922.txt yob1937.txt yob1952.txt yob1967.txt yob1982.txt yob1997.txt yob2012.txt
+NationalReadMe.pdf yob1893.txt yob1908.txt yob1923.txt yob1938.txt yob1953.txt yob1968.txt yob1983.txt yob1998.txt yob2013.txt
+README-cloudshell.txt yob1894.txt yob1909.txt yob1924.txt yob1939.txt yob1954.txt yob1969.txt yob1984.txt yob1999.txt yob2014.txt
+yob1880.txt yob1895.txt yob1910.txt yob1925.txt yob1940.txt yob1955.txt yob1970.txt yob1985.txt yob2000.txt yob2015.txt
+yob1881.txt yob1896.txt yob1911.txt yob1926.txt yob1941.txt yob1956.txt yob1971.txt yob1986.txt yob2001.txt yob2016.txt
+yob1882.txt yob1897.txt yob1912.txt yob1927.txt yob1942.txt yob1957.txt yob1972.txt yob1987.txt yob2002.txt yob2017.txt
+yob1883.txt yob1898.txt yob1913.txt yob1928.txt yob1943.txt yob1958.txt yob1973.txt yob1988.txt yob2003.txt yob2018.txt
+yob1884.txt yob1899.txt yob1914.txt yob1929.txt yob1944.txt yob1959.txt yob1974.txt yob1989.txt yob2004.txt yob2019.txt
+yob1885.txt yob1900.txt yob1915.txt yob1930.txt yob1945.txt yob1960.txt yob1975.txt yob1990.txt yob2005.txt yob2020.txt
+yob1886.txt yob1901.txt yob1916.txt yob1931.txt yob1946.txt yob1961.txt yob1976.txt yob1991.txt yob2006.txt yob2021.txt
+yob1887.txt yob1902.txt yob1917.txt yob1932.txt yob1947.txt yob1962.txt yob1977.txt yob1992.txt yob2007.txt yob2022.txt
+yob1888.txt yob1903.txt yob1918.txt yob1933.txt yob1948.txt yob1963.txt yob1978.txt yob1993.txt yob2008.txt yob2023.txt
+yob1889.txt yob1904.txt yob1919.txt yob1934.txt yob1949.txt yob1964.txt yob1979.txt yob1994.txt yob2009.txt
+yob1890.txt yob1905.txt yob1920.txt yob1935.txt yob1950.txt yob1965.txt yob1980.txt yob1995.txt yob2010.txt
+yob1891.txt yob1906.txt yob1921.txt yob1936.txt yob1951.txt yob1966.txt yob1981.txt yob1996.txt yob2011.txt
+student_04_652c04e85063@cloudshell:~ (qwiklabs-gcp-02-da3a9db0fa34)$
+student_04_652c04e85063@cloudshell:~ (qwiklabs-gcp-02-da3a9db0fa34)$
+student_04_652c04e85063@cloudshell:~ (qwiklabs-gcp-02-da3a9db0fa34)$ bq load babynames.names2010 yob2010.txt name:string,gender:string,count:integer
+Upload complete.
+Waiting on bqjob_r8784eff044a6a5a_00000196594934fe_1 ... (0s) Current status: DONE  
+student_04_652c04e85063@cloudshell:~ (qwiklabs-gcp-02-da3a9db0fa34)$ bq ls
+datasetId
+
+---
+
+babynames  
+student_04_652c04e85063@cloudshell:~ (qwiklabs-gcp-02-da3a9db0fa34)$
+student_04_652c04e85063@cloudshell:~ (qwiklabs-gcp-02-da3a9db0fa34)$ bq ls babynames
+tableId Type Labels Time Partitioning Clustered Fields
+
+---
+
+names2010 TABLE  
+student_04_652c04e85063@cloudshell:~ (qwiklabs-gcp-02-da3a9db0fa34)$
+student_04_652c04e85063@cloudshell:~ (qwiklabs-gcp-02-da3a9db0fa34)$ bq show babynames.names2010
+Table qwiklabs-gcp-02-da3a9db0fa34:babynames.names2010
+
+Last modified Schema Total Rows Total Bytes Expiration Time Partitioning Clustered Fields Total Logical Bytes Total Physical Bytes Labels
+
+---
+
+21 Apr 16:58:16 |- name: string 34101 655026 20 Jun 16:58:16 655026  
+ |- gender: string  
+ |- count: integer
+
+student_04_652c04e85063@cloudshell:~ (qwiklabs-gcp-02-da3a9db0fa34)$
+student_04_652c04e85063@cloudshell:~ (qwiklabs-gcp-02-da3a9db0fa34)$
+student_04_652c04e85063@cloudshell:~ (qwiklabs-gcp-02-da3a9db0fa34)$ bq query "SELECT name,count FROM babynames.names2010 WHERE gender = 'F' ORDER BY count DESC LIMIT 5"
++----------+-------+
+| name | count |
++----------+-------+
+| Isabella | 22934 |
+| Sophia | 20654 |
+| Emma | 17361 |
+| Olivia | 17035 |
+| Ava | 15441 |
++----------+-------+
+student_04_652c04e85063@cloudshell:~ (qwiklabs-gcp-02-da3a9db0fa34)$
+student_04_652c04e85063@cloudshell:~ (qwiklabs-gcp-02-da3a9db0fa34)$
+student_04_652c04e85063@cloudshell:~ (qwiklabs-gcp-02-da3a9db0fa34)$ bq query "SELECT name,count FROM babynames.names2010 WHERE gender = 'M' ORDER BY count ASC LIMIT 5"
++----------+-------+
+| name | count |
++----------+-------+
+| Aaqib | 5 |
+| Aaidan | 5 |
+| Aadhavan | 5 |
+| Aarian | 5 |
+| Aamarion | 5 |
++----------+-------+
+student_04_652c04e85063@cloudshell:~ (qwiklabs-gcp-02-da3a9db0fa34)$ bq rm -r babynames
+rm: remove dataset 'qwiklabs-gcp-02-da3a9db0fa34:babynames'? (y/N) y
+student_04_652c04e85063@cloudshell:~ (qwiklabs-gcp-02-da3a9db0fa34)$ bq ls
