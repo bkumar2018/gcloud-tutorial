@@ -1,0 +1,519 @@
+Overview
+In Kubernetes Engine, a private cluster is a cluster that makes your master inaccessible from the public internet. In a private cluster, nodes do not have public IP addresses, only private addresses, so your workloads run in an isolated environment. Nodes and masters communicate with each other using VPC peering.
+
+In the Kubernetes Engine API, address ranges are expressed as Classless Inter-Domain Routing (CIDR) blocks.
+
+In this lab, you learn how to create a private Kubernetes cluster.
+
+What you'll do
+Create a Private Kubernetes Cluster.
+
+Task 1. Set the region and zone
+Set the project region for this lab:
+gcloud config set compute/zone "Zone"
+Copied!
+Create a variable for region:
+export REGION=Region
+Copied!
+Create a variable for zone:
+export ZONE=Zone
+Copied!
+Learn more from the Regions & Zones documentation.
+
+Note: When you run gcloud on your own machine, the config settings are persisted across sessions. But in Cloud Shell, you need to set this for every new session or reconnection.
+Task 2. Creating a private cluster
+When you create a private cluster, you must specify a /28 CIDR range for the VMs that run the Kubernetes master components and you need to enable IP aliases.
+Next you'll create a cluster named private-cluster, and specify a CIDR range of 172.16.0.16/28 for the masters. When you enable IP aliases, you let Kubernetes Engine automatically create a subnetwork for you.
+
+You'll create the private cluster by using the --private-cluster, --master-ipv4-cidr, and --enable-ip-alias flags.
+
+Run the following to create the cluster:
+gcloud beta container clusters create private-cluster \
+ --enable-private-nodes \
+ --master-ipv4-cidr 172.16.0.16/28 \
+ --enable-ip-alias \
+ --create-subnetwork ""
+Copied!
+Test completed task
+
+Task 3. View your subnet and secondary address ranges
+List the subnets in the default network:
+gcloud compute networks subnets list --network default
+Copied!
+In the output, find the name of the subnetwork that was automatically created for your cluster. For example, gke-private-cluster-subnet-xxxxxxxx. Save the name of the cluster, you'll use it in the next step.
+
+Now get information about the automatically created subnet, replacing [SUBNET_NAME] with your subnet by running:
+
+gcloud compute networks subnets describe [SUBNET_NAME] --region=$REGION
+Copied!
+The output shows you the primary address range with the name of your GKE private cluster and the secondary ranges:
+
+...
+ipCidrRange: 10.0.0.0/22
+kind: compute#subnetwork
+name: gke-private-cluster-subnet-163e3c97
+...
+privateIpGoogleAccess: true
+...
+secondaryIpRanges:
+
+- ipCidrRange: 10.40.0.0/14
+  rangeName: gke-private-cluster-pods-163e3c97
+- ipCidrRange: 10.0.16.0/20
+  rangeName: gke-private-cluster-services-163e3c97
+  ...
+  In the output you can see that one secondary range is for pods and the other secondary range is for services.
+
+Notice that privateIPGoogleAccess is set to true. This enables your cluster hosts, which have only private IP addresses, to communicate with Google APIs and services.
+
+Task 4. Enable master authorized networks
+At this point, the only IP addresses that have access to the master are the addresses in these ranges:
+
+The primary range of your subnetwork. This is the range used for nodes.
+The secondary range of your subnetwork that is used for pods.
+To provide additional access to the master, you must authorize selected address ranges.
+
+Create a VM instance
+Create a source instance which you'll use to check the connectivity to Kubernetes clusters:
+gcloud compute instances create source-instance --zone=$ZONE --scopes 'https://www.googleapis.com/auth/cloud-platform'
+Copied!
+Test completed task
+
+Get the <External_IP> of the source-instance with:
+gcloud compute instances describe source-instance --zone=$ZONE | grep natIP
+Copied!
+Example Output:
+
+natIP: 35.192.107.237
+Copy the <nat_IP> address and save it to use in later steps.
+
+Run the following to Authorize your external address range, replacing [MY_EXTERNAL_RANGE] with the CIDR range of the external addresses from the previous output (your CIDR range is natIP/32). With CIDR range as natIP/32, we are allowlisting one specific IP address:
+
+gcloud container clusters update private-cluster \
+ --enable-master-authorized-networks \
+ --master-authorized-networks [MY_EXTERNAL_RANGE]
+Copied!
+Note: In a production environment replace [MY_EXTERNAL_RANGE] with your network external address CIDR range.
+Test completed task
+
+Now that you have access to the master from a range of external addresses, you'll install kubectl so you can use it to get information about your cluster. For example, you can use kubectl to verify that your nodes do not have external IP addresses.
+
+SSH into source-instance with:
+gcloud compute ssh source-instance --zone=$ZONE
+Copied!
+Press Y to continue. Enter through the passphrase questions.
+
+In SSH shell install kubectl component of Cloud-SDK:
+
+sudo apt-get install kubectl
+
+Configure access to the Kubernetes cluster from SSH shell with:
+
+sudo apt-get install google-cloud-sdk-gke-gcloud-auth-plugin
+gcloud container clusters get-credentials private-cluster --zone=$ZONE
+
+Note: Please make sure that the assigned zone has been exported in the ZONE variable.
+Verify that your cluster nodes do not have external IP addresses:
+kubectl get nodes --output yaml | grep -A4 addresses
+
+The output shows that the nodes have internal IP addresses but do not have external addresses:
+
+...
+addresses:
+
+- address: 10.0.0.4
+  type: InternalIP
+- address: ""
+  type: ExternalIP
+  ...
+  Here is another command you can use to verify that your nodes do not have external IP addresses:
+  kubectl get nodes --output wide
+  Copied!
+  The output shows an empty column for EXTERNAL-IP:
+
+STATUS ... VERSION EXTERNAL-IP OS-IMAGE ...
+Ready v1.8.7-gke.1 Container-Optimized OS from Google
+Ready v1.8.7-gke.1 Container-Optimized OS from Google
+Ready v1.8.7-gke.1 Container-Optimized OS from Google
+Close the SSH shell by typing:
+exit
+Copied!
+
+Task 5. Clean Up
+Delete the Kubernetes cluster:
+gcloud container clusters delete private-cluster --zone=$ZONE
+Copied!
+Press Y to continue.
+Test completed task
+
+Task 6. Create a private cluster that uses a custom subnetwork
+In the previous section Kubernetes Engine automatically created a subnetwork for you. In this section, you'll create your own custom subnetwork, and then create a private cluster. Your subnetwork has a primary address range and two secondary address ranges.
+
+Create a subnetwork and secondary ranges:
+gcloud compute networks subnets create my-subnet \
+ --network default \
+ --range 10.0.4.0/22 \
+ --enable-private-ip-google-access \
+ --region=$REGION \
+ --secondary-range my-svc-range=10.0.32.0/20,my-pod-range=10.4.0.0/14
+Copied!
+Test completed task
+
+Create a private cluster that uses your subnetwork:
+gcloud beta container clusters create private-cluster2 \
+ --enable-private-nodes \
+ --enable-ip-alias \
+ --master-ipv4-cidr 172.16.0.32/28 \
+ --subnetwork my-subnet \
+ --services-secondary-range-name my-svc-range \
+ --cluster-secondary-range-name my-pod-range \
+ --zone=$ZONE
+Copied!
+Test completed task
+
+Retrieve the external address range of the source instance:
+gcloud compute instances describe source-instance --zone=$ZONE | grep natIP
+Copied!
+Example Output:
+
+natIP: 35.222.210.67
+Copy the <nat_IP> address and save it to use in later steps.
+
+Run the following to Authorize your external address range, replacing [MY_EXTERNAL_RANGE] with the CIDR range of the external addresses from the previous output (your CIDR range is natIP/32). With CIDR range as natIP/32, we are allowlisting one specific IP address:
+
+gcloud container clusters update private-cluster2 \
+ --enable-master-authorized-networks \
+ --zone=$ZONE \
+ --master-authorized-networks [MY_EXTERNAL_RANGE]
+Copied!
+Test completed task
+
+SSH into source-instance with:
+gcloud compute ssh source-instance --zone=$ZONE
+Copied!
+Configure access to the Kubernetes cluster from SSH shell with:
+gcloud container clusters get-credentials private-cluster2 --zone=$ZONE
+Copied!
+Note: Please make sure that the assigned zone has been exported in the ZONE variable.
+Verify that your cluster nodes do not have external IP addresses:
+kubectl get nodes --output yaml | grep -A4 addresses
+Copied!
+The output shows that the nodes have internal IP addresses but do not have external addresses:
+
+...
+addresses:
+
+- address: 10.0.4.3
+  type: InternalIP
+  ...
+  At this point, the only IP addresses that have access to the master are the addresses in these ranges:
+
+The primary range of your subnetwork. This is the range used for nodes. In this example, the range for nodes is 10.0.4.0/22.
+The secondary range of your subnetwork that is used for pods. In this example, the range for pods is 10.4.0.0/14.
+
+/////////
+
+gcloud config set compute/zone europe-west4-c
+export REGION=europe-west4
+export ZONE=europe-west4-c
+
+gcloud beta container clusters create private-cluster \
+ --enable-private-nodes \
+ --master-ipv4-cidr 172.16.0.16/28 \
+ --enable-ip-alias \
+ --create-subnetwork ""
+
+........
+student_02_fef87e802fb8@cloudshell:~ (qwiklabs-gcp-00-946a3a68cfcc)$ gcloud beta container clusters create private-cluster \
+ --enable-private-nodes \
+ --master-ipv4-cidr 172.16.0.16/28 \
+ --enable-ip-alias \
+ --create-subnetwork ""
+
+Note: The Kubelet readonly port (10255) is now deprecated. Please update your workloads to use the recommended alternatives. See https://cloud.google.com/kubernetes-engine/docs/how-to/disable-kubelet-readonly-port for ways to check usage and for migration instructions.
+Creating cluster private-cluster in europe-west4-c... Cluster is being health-checked (Kubernetes Control Plane is healthy)...done.  
+Created [https://container.googleapis.com/v1beta1/projects/qwiklabs-gcp-00-946a3a68cfcc/zones/europe-west4-c/clusters/private-cluster].
+To inspect the contents of your cluster, go to: https://console.cloud.google.com/kubernetes/workload_/gcloud/europe-west4-c/private-cluster?project=qwiklabs-gcp-00-946a3a68cfcc
+kubeconfig entry generated for private-cluster.
+NAME: private-cluster
+LOCATION: europe-west4-c
+MASTER_VERSION: 1.32.2-gke.1182003
+MASTER_IP: 34.90.201.16
+MACHINE_TYPE: e2-medium
+NODE_VERSION: 1.32.2-gke.1182003
+NUM_NODES: 3
+STATUS: RUNNING
+student_02_fef87e802fb8@cloudshell:~ (qwiklabs-gcp-00-946a3a68cfcc)$
+.......
+
+gcloud compute networks subnets list --network default | grep gke-private-cluster-subnet
+
+student_02_fef87e802fb8@cloudshell:~ (qwiklabs-gcp-00-946a3a68cfcc)$ gcloud compute networks subnets list --network default | grep gke-private-cluster-subnet
+NAME: gke-private-cluster-subnet-577d134b
+
+gcloud compute networks subnets describe [SUBNET_NAME] --region=$REGION
+
+gcloud compute networks subnets describe gke-private-cluster-subnet-577d134b --region=$REGION
+
+........
+student_02_fef87e802fb8@cloudshell:~ (qwiklabs-gcp-00-946a3a68cfcc)$ gcloud compute networks subnets describe gke-private-cluster-subnet-577d134b --region=europe-west4
+
+creationTimestamp: '2025-05-03T03:07:01.026-07:00'
+description: auto-created subnetwork for cluster "private-cluster"
+fingerprint: N3oTU7fQTAk=
+gatewayAddress: 10.18.12.1
+id: '7151183124284068906'
+ipCidrRange: 10.18.12.0/22
+kind: compute#subnetwork
+name: gke-private-cluster-subnet-577d134b
+network: https://www.googleapis.com/compute/v1/projects/qwiklabs-gcp-00-946a3a68cfcc/global/networks/default
+privateIpGoogleAccess: true
+privateIpv6GoogleAccess: DISABLE_GOOGLE_ACCESS
+purpose: PRIVATE
+region: https://www.googleapis.com/compute/v1/projects/qwiklabs-gcp-00-946a3a68cfcc/regions/europe-west4
+reservedInternalRange: https://networkconnectivity.googleapis.com/v1/projects/qwiklabs-gcp-00-946a3a68cfcc/locations/global/internalRanges/gke-private-cluster-subnet-577d134b
+secondaryIpRanges:
+
+- ipCidrRange: 10.120.0.0/14
+  rangeName: gke-private-cluster-pods-577d134b
+  reservedInternalRange: https://networkconnectivity.googleapis.com/v1/projects/qwiklabs-gcp-00-946a3a68cfcc/locations/global/internalRanges/gke-private-cluster-pods-577d134b
+  selfLink: https://www.googleapis.com/compute/v1/projects/qwiklabs-gcp-00-946a3a68cfcc/regions/europe-west4/subnetworks/gke-private-cluster-subnet-577d134b
+  stackType: IPV4_ONLY
+  student_02_fef87e802fb8@cloudshell:~ (qwiklabs-gcp-00-946a3a68cfcc)$
+  ........
+
+Create a source instance which you'll use to check the connectivity to Kubernetes clusters:
+
+gcloud compute instances create source-instance --zone=$ZONE --scopes 'https://www.googleapis.com/auth/cloud-platform'
+
+.....
+student_02_fef87e802fb8@cloudshell:~ (qwiklabs-gcp-00-946a3a68cfcc)$ gcloud compute instances create source-instance --zone=$ZONE --scopes 'https://www.googleapis.com/auth/cloud-platform'
+
+Created [https://www.googleapis.com/compute/v1/projects/qwiklabs-gcp-00-946a3a68cfcc/zones/europe-west4-c/instances/source-instance].
+NAME: source-instance
+ZONE: europe-west4-c
+MACHINE_TYPE: n1-standard-1
+PREEMPTIBLE:
+INTERNAL_IP: 10.164.0.2
+EXTERNAL_IP: 34.91.44.226
+STATUS: RUNNING
+student_02_fef87e802fb8@cloudshell:~ (qwiklabs-gcp-00-946a3a68cfcc)$
+.......
+
+student_02_fef87e802fb8@cloudshell:~ (qwiklabs-gcp-00-946a3a68cfcc)$ gcloud compute instances describe source-instance --zone=$ZONE | grep natIP
+
+    natIP: 34.91.44.226
+
+......
+
+Run the following to Authorize your external address range, replacing [MY_EXTERNAL_RANGE] with the CIDR range of the external addresses from the previous output (your CIDR range is natIP/32). With CIDR range as natIP/32, we are allowlisting one specific IP address:
+
+gcloud container clusters update private-cluster \
+ --enable-master-authorized-networks \
+ --master-authorized-networks [MY_EXTERNAL_RANGE]
+Copied!
+Note: In a production environment replace [MY_EXTERNAL_RANGE] with your network external address CIDR range.
+
+gcloud container clusters update private-cluster \
+ --enable-master-authorized-networks \
+ --master-authorized-networks 34.91.44.226/32
+.....
+student_02_fef87e802fb8@cloudshell:~ (qwiklabs-gcp-00-946a3a68cfcc)$ gcloud container clusters update private-cluster \
+ --enable-master-authorized-networks \
+ --master-authorized-networks 34.91.44.226/32
+
+Updating private-cluster...done.  
+Updated [https://container.googleapis.com/v1/projects/qwiklabs-gcp-00-946a3a68cfcc/zones/europe-west4-c/clusters/private-cluster].
+To inspect the contents of your cluster, go to: https://console.cloud.google.com/kubernetes/workload_/gcloud/europe-west4-c/private-cluster?project=qwiklabs-gcp-00-946a3a68cfcc
+student_02_fef87e802fb8@cloudshell:~ (qwiklabs-gcp-00-946a3a68cfcc)$
+......
+
+ssh to cloud instance from cloud shell:
+
+gcloud compute ssh source-instance --zone=$ZONE
+
+sudo apt-get install kubectl
+
+sudo apt-get install google-cloud-sdk-gke-gcloud-auth-plugin
+gcloud container clusters get-credentials private-cluster --zone=$ZONE
+
+student-02-fef87e802fb8@source-instance:~$ gcloud container clusters get-credentials private-cluster --zone=$ZONE
+Fetching cluster endpoint and auth data.
+kubeconfig entry generated for private-cluster
+
+student-02-fef87e802fb8@source-instance:~$ kubectl get nodes --output yaml | grep -A4 addresses
+addresses: - address: 10.18.12.2
+type: InternalIP - address: gke-private-cluster-default-pool-9aaeb605-1bx4
+type: Hostname
+--
+addresses: - address: 10.18.12.4
+type: InternalIP - address: gke-private-cluster-default-pool-9aaeb605-g1h8
+type: Hostname
+--
+addresses: - address: 10.18.12.3
+type: InternalIP - address: gke-private-cluster-default-pool-9aaeb605-zv18
+type: Hostname
+student-02-fef87e802fb8@source-instance:~$
+
+student-02-fef87e802fb8@source-instance:~$ kubectl get nodes --output wide
+NAME STATUS ROLES AGE VERSION INTERNAL-IP EXTERNAL-IP OS-IMAGE KERNEL-VERSION CONTAINER-RUNTIME
+gke-private-cluster-default-pool-9aaeb605-1bx4 Ready <none> 17m v1.32.2-gke.1182003 10.18.12.2 <none> Container-Optimized OS from Google 6.6.72+ containerd://1.7.24
+gke-private-cluster-default-pool-9aaeb605-g1h8 Ready <none> 17m v1.32.2-gke.1182003 10.18.12.4 <none> Container-Optimized OS from Google 6.6.72+ containerd://1.7.24
+gke-private-cluster-default-pool-9aaeb605-zv18 Ready <none> 17m v1.32.2-gke.1182003 10.18.12.3 <none> Container-Optimized OS from Google 6.6.72+ containerd://1.7.24
+student-02-fef87e802fb8@source-instance:~$
+exit
+
+Delete k8s cluster:
+
+gcloud container clusters delete private-cluster --zone=$ZONE
+
+//////
+
+Task 6. Create a private cluster that uses a custom subnetwork
+In the previous section Kubernetes Engine automatically created a subnetwork for you. In this section, you'll create your own custom subnetwork, and then create a private cluster. Your subnetwork has a primary address range and two secondary address ranges.
+
+Create a subnetwork and secondary ranges:
+
+gcloud compute networks subnets create my-subnet \
+ --network default \
+ --range 10.0.4.0/22 \
+ --enable-private-ip-google-access \
+ --region=$REGION \
+ --secondary-range my-svc-range=10.0.32.0/20,my-pod-range=10.4.0.0/14
+
+student_02_fef87e802fb8@cloudshell:~ (qwiklabs-gcp-00-946a3a68cfcc)$ gcloud compute networks subnets create my-subnet \
+ --network default \
+ --range 10.0.4.0/22 \
+ --enable-private-ip-google-access \
+ --region=$REGION \
+ --secondary-range my-svc-range=10.0.32.0/20,my-pod-range=10.4.0.0/14
+
+Created [https://www.googleapis.com/compute/v1/projects/qwiklabs-gcp-00-946a3a68cfcc/regions/europe-west4/subnetworks/my-subnet].
+NAME: my-subnet
+REGION: europe-west4
+NETWORK: default
+RANGE: 10.0.4.0/22
+STACK_TYPE: IPV4_ONLY
+IPV6_ACCESS_TYPE:
+INTERNAL_IPV6_PREFIX:
+EXTERNAL_IPV6_PREFIX:
+student_02_fef87e802fb8@cloudshell:~ (qwiklabs-gcp-00-946a3a68cfcc)$
+
+Create a private cluster that uses your subnetwork:
+
+gcloud beta container clusters create private-cluster2 \
+ --enable-private-nodes \
+ --enable-ip-alias \
+ --master-ipv4-cidr 172.16.0.32/28 \
+ --subnetwork my-subnet \
+ --services-secondary-range-name my-svc-range \
+ --cluster-secondary-range-name my-pod-range \
+ --zone=$ZONE
+
+Retrieve the external address range of the source instance:
+
+gcloud compute instances describe source-instance --zone=$ZONE | grep natIP
+
+Run the following to Authorize your external address range, replacing [MY_EXTERNAL_RANGE] with the CIDR range of the external addresses from the previous output (your CIDR range is natIP/32). With CIDR range as natIP/32, we are allowlisting one specific IP address:
+
+gcloud container clusters update private-cluster2 \
+ --enable-master-authorized-networks \
+ --zone=$ZONE \
+ --master-authorized-networks [MY_EXTERNAL_RANGE]
+
+............
+student_02_fef87e802fb8@cloudshell:~ (qwiklabs-gcp-00-946a3a68cfcc)$ gcloud beta container clusters create private-cluster2 \
+ --enable-private-nodes \
+ --enable-ip-alias \
+ --master-ipv4-cidr 172.16.0.32/28 \
+ --subnetwork my-subnet \
+ --services-secondary-range-name my-svc-range \
+ --cluster-secondary-range-name my-pod-range \
+ --zone=$ZONE
+Note: The Kubelet readonly port (10255) is now deprecated. Please update your workloads to use the recommended alternatives. See https://cloud.google.com/kubernetes-engine/docs/how-to/disable-kubelet-readonly-port for ways to check usage and for migration instructions.
+
+Creating cluster private-cluster2 in europe-west4-c... Cluster is being health-checked...working.  
+Creating cluster private-cluster2 in europe-west4-c... Cluster is being health-checked (Kubernetes Control Plane is healthy)...done.  
+Created [https://container.googleapis.com/v1beta1/projects/qwiklabs-gcp-00-946a3a68cfcc/zones/europe-west4-c/clusters/private-cluster2].
+To inspect the contents of your cluster, go to: https://console.cloud.google.com/kubernetes/workload_/gcloud/europe-west4-c/private-cluster2?project=qwiklabs-gcp-00-946a3a68cfcc
+kubeconfig entry generated for private-cluster2.
+NAME: private-cluster2
+LOCATION: europe-west4-c
+MASTER_VERSION: 1.32.2-gke.1182003
+MASTER_IP: 34.34.52.160
+MACHINE_TYPE: e2-medium
+NODE_VERSION: 1.32.2-gke.1182003
+NUM_NODES: 3
+STATUS: RUNNING
+student_02_fef87e802fb8@cloudshell:~ (qwiklabs-gcp-00-946a3a68cfcc)$
+
+.........
+student_02_fef87e802fb8@cloudshell:~ (qwiklabs-gcp-00-946a3a68cfcc)$ gcloud compute instances describe source-instance --zone=$ZONE | grep natIP
+    natIP: 34.91.44.226
+student_02_fef87e802fb8@cloudshell:~ (qwiklabs-gcp-00-946a3a68cfcc)$
+
+gcloud container clusters update private-cluster2 \
+ --enable-master-authorized-networks \
+ --zone=$ZONE \
+ --master-authorized-networks [MY_EXTERNAL_RANGE]
+
+    gcloud container clusters update private-cluster2 \
+    --enable-master-authorized-networks \
+    --zone=$ZONE \
+    --master-authorized-networks 34.91.44.226/32
+
+/.........
+
+student*02_fef87e802fb8@cloudshell:~ (qwiklabs-gcp-00-946a3a68cfcc)$ gcloud container clusters update private-cluster2 \
+ --enable-master-authorized-networks \
+ --zone=$ZONE \
+ --master-authorized-networks 34.91.44.226/32
+Updating private-cluster2...done.  
+Updated [https://container.googleapis.com/v1/projects/qwiklabs-gcp-00-946a3a68cfcc/zones/europe-west4-c/clusters/private-cluster2].
+To inspect the contents of your cluster, go to: https://console.cloud.google.com/kubernetes/workload*/gcloud/europe-west4-c/private-cluster2?project=qwiklabs-gcp-00-946a3a68cfcc
+student_02_fef87e802fb8@cloudshell:~ (qwiklabs-gcp-00-946a3a68cfcc)$
+
+/........
+
+student_02_fef87e802fb8@cloudshell:~ (qwiklabs-gcp-00-946a3a68cfcc)$ gcloud compute ssh source-instance --zone=$ZONE
+Linux source-instance 6.1.0-33-cloud-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.1.133-1 (2025-04-10) x86_64
+The programs included with the Debian GNU/Linux system are free software;
+student-02-fef87e802fb8@source-instance:~$ export ZONE=europe-west4-c
+student-02-fef87e802fb8@source-instance:~$
+student-02-fef87e802fb8@source-instance:~$ echo $ZONE
+europe-west4-c
+student-02-fef87e802fb8@source-instance:~$
+student-02-fef87e802fb8@source-instance:~$ gcloud container clusters get-credentials private-cluster2 --zone=$ZONE
+Fetching cluster endpoint and auth data.
+kubeconfig entry generated for private-cluster2.
+student-02-fef87e802fb8@source-instance:~$
+
+kubectl get nodes --output yaml | grep -A4 addresses
+
+student-02-fef87e802fb8@source-instance:~$ kubectl get nodes --output yaml | grep -A4 addresses
+addresses: - address: 10.0.4.3
+type: InternalIP - address: gke-private-cluster2-default-pool-19d87588-l7bn
+type: Hostname
+--
+addresses: - address: 10.0.4.4
+type: InternalIP - address: gke-private-cluster2-default-pool-19d87588-wgq8
+type: Hostname
+--
+addresses: - address: 10.0.4.2
+type: InternalIP - address: gke-private-cluster2-default-pool-19d87588-wxhv
+type: Hostname
+student-02-fef87e802fb8@source-instance:~$
+
+student-02-fef87e802fb8@source-instance:~$ kubectl get nodes
+NAME STATUS ROLES AGE VERSION
+gke-private-cluster2-default-pool-19d87588-l7bn Ready <none> 7m6s v1.32.2-gke.1182003
+gke-private-cluster2-default-pool-19d87588-wgq8 Ready <none> 7m8s v1.32.2-gke.1182003
+gke-private-cluster2-default-pool-19d87588-wxhv Ready <none> 7m7s v1.32.2-gke.1182003
+student-02-fef87e802fb8@source-instance:~$
+student-02-fef87e802fb8@source-instance:~$
+student-02-fef87e802fb8@source-instance:~$ kubectl get nodes -o wide
+NAME STATUS ROLES AGE VERSION INTERNAL-IP EXTERNAL-IP OS-IMAGE KERNEL-VERSION CONTAINER-RUNTIME
+gke-private-cluster2-default-pool-19d87588-l7bn Ready <none> 7m11s v1.32.2-gke.1182003 10.0.4.3 <none> Container-Optimized OS from Google 6.6.72+ containerd://1.7.24
+gke-private-cluster2-default-pool-19d87588-wgq8 Ready <none> 7m13s v1.32.2-gke.1182003 10.0.4.4 <none> Container-Optimized OS from Google 6.6.72+ containerd://1.7.24
+gke-private-cluster2-default-pool-19d87588-wxhv Ready <none> 7m12s v1.32.2-gke.1182003 10.0.4.2 <none> Container-Optimized OS from Google 6.6.72+ containerd://1.7.24
+student-02-fef87e802fb8@source-instance:~$

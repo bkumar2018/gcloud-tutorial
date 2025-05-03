@@ -1,0 +1,569 @@
+Terraform Challenge:
+
+Task 1. Create the configuration files
+In Cloud Shell, create your Terraform configuration files and a directory structure that resembles the following:
+main.tf
+variables.tf
+modules/
+└── instances
+├── instances.tf
+├── outputs.tf
+└── variables.tf
+└── storage
+├── storage.tf
+├── outputs.tf
+└── variables.tf
+Copied!
+Fill out the variables.tf files in the root directory and within the modules. Add three variables to each file: region, zone, and project_id. For their default values, use us-central1, us-central1-c, and your Google Cloud Project ID.
+Note: You should use these variables anywhere applicable in your resource configurations.
+Add the Terraform block and the Google Provider to the main.tf file. Verify the zone argument is added along with the project and region arguments in the Google Provider block.
+
+Initialize Terraform.
+
+Task 2. Import infrastructure
+In the Google Cloud Console, on the Navigation menu, click Compute Engine > VM Instances. Two instances named tf-instance-1 and tf-instance-2 have already been created for you.
+Note: by clicking on one of the instances, you can find its Instance ID, boot disk image, and machine type. These are all necessary for writing the configurations correctly and importing them into Terraform.
+Import the existing instances into the instances module. To do this, you will need to follow these steps:
+First, add the module reference into the main.tf file then re-initialize Terraform.
+Next, write the resource configurations in the instances.tf file to match the pre-existing instances.
+Name your instances tf-instance-1 and tf-instance-2.
+For the purposes of this lab, the resource configuration should be as minimal as possible. To accomplish this, you will only need to include the following additional arguments in your configuration: machine_type, boot_disk, network_interface, metadata_startup_script, and allow_stopping_for_update. For the last two arguments, use the following configuration as this will ensure you won't need to recreate it:
+metadata_startup_script = <<-EOT
+#!/bin/bash
+EOT
+allow_stopping_for_update = true
+Copied!
+Once you have written the resource configurations within the module, use the terraform import command to import them into your instances module.
+Apply your changes. Note that since you did not fill out all of the arguments in the entire configuration, the apply will update the instances in-place. This is fine for lab purposes, but in a production environment, you should make sure to fill out all of the arguments correctly before importing.
+Click Check my progress to verify the objective.
+Assessment Completed!
+Import infrastructure.
+Assessment Completed!
+
+Task 3. Configure a remote backend
+Create a Cloud Storage bucket resource inside the storage module. For the bucket name, use tf-bucket-335240. For the rest of the arguments, you can simply use:
+
+location = "US"
+force_destroy = true
+uniform_bucket_level_access = true
+Note: You can optionally add output values inside of the outputs.tf file.
+Add the module reference to the main.tf file. Initialize the module and apply the changes to create the bucket using Terraform.
+
+Configure this storage bucket as the remote backend inside the main.tf file. Be sure to use the prefix terraform/state so it can be graded successfully.
+
+If you've written the configuration correctly, upon init, Terraform will ask whether you want to copy the existing state data to the new backend. Type yes at the prompt.
+
+Click Check my progress to verify the objective.
+Assessment Completed!
+Configure a remote backend.
+Assessment Completed!
+
+Task 4. Modify and update infrastructure
+Navigate to the instances module and modify the tf-instance-1 resource to use an e2-standard-2 machine type.
+
+Modify the tf-instance-2 resource to use an e2-standard-2 machine type.
+
+Add a third instance resource and name it tf-instance-988515. For this third resource, use an e2-standard-2 machine type. Make sure to change the machine type to e2-standard-2 to all the three instances.
+
+Initialize Terraform and apply your changes.
+
+Note: Optionally, you can add output values from these resources in the outputs.tf file within the module.
+Click Check my progress to verify the objective.
+Assessment Completed!
+Modify and update infrastructure.
+Assessment Completed!
+
+Task 5. Destroy resources
+Destroy the third instance tf-instance-988515 by removing the resource from the configuration file. After removing it, initialize terraform and apply the changes.
+Click Check my progress to verify the objective.
+Assessment Completed!
+Destroy resources.
+Assessment Completed!
+
+Task 6. Use a module from the Registry
+In the Terraform Registry, browse to the Network Module.
+
+Add this module to your main.tf file. Use the following configurations:
+
+Use version 6.0.0 (different versions might cause compatibility errors).
+Name the VPC tf-vpc-448496, and use a global routing mode.
+Specify 2 subnets in the us-central1 region, and name them subnet-01 and subnet-02. For the subnets arguments, you just need the Name, IP, and Region.
+Use the IP 10.10.10.0/24 for subnet-01, and 10.10.20.0/24 for subnet-02.
+You do not need any secondary ranges or routes associated with this VPC, so you can omit them from the configuration.
+Once you've written the module configuration, initialize Terraform and run an apply to create the networks.
+
+Next, navigate to the instances.tf file and update the configuration resources to connect tf-instance-1 to subnet-01 and tf-instance-2 to subnet-02.
+
+Note: Within the instance configuration, you will need to update the network argument to tf-vpc-448496, and then add the subnetwork argument with the correct subnet for each instance.
+Click Check my progress to verify the objective.
+Assessment Completed!
+Use a module from the Registry.
+Assessment Completed!
+
+Task 7. Configure a firewall
+Create a firewall rule resource in the main.tf file, and name it tf-firewall.
+This firewall rule should permit the tf-vpc-448496 network to allow ingress connections on all IP ranges (0.0.0.0/0) on TCP port 80.
+Make sure you add the source_ranges argument with the correct IP range (0.0.0.0/0).
+Initialize Terraform and apply your changes.
+Note: To retrieve the required network argument, you can inspect the state and find the ID or self_link of the google_compute_network resource you created. It will be in the form projects/PROJECT_ID/global/networks/tf-vpc-448496.
+Click Check my progress to verify the objective.
+Assessment Completed!
+Configure a firewall.
+Assessment Completed!
+
+Congratulations!
+If you managed to import, create, modify, and configure the architecture within the allotted time, you've shown great competency in your Terraform skills! In this lab, you started by importing two pre-configured VMs into Terraform and creating a Cloud Storage bucket to configure your backend. You then added another instance and practiced modifying and updating the resource configurations within your modules. Lastly, you used a module from the Terraform Registry to create a VPC with two subnets, connected the instances to it, and created a firewall rule to allow connections between them.
+
+////////////
+
+Solution
+
+You said:
+In Cloud Shell, create your Terraform configuration files and a directory structure that resembles the following:
+main.tf
+variables.tf
+modules/
+└── instances
+├── instances.tf
+├── outputs.tf
+└── variables.tf
+└── storage
+├── storage.tf
+├── outputs.tf
+└── variables.tf
+Copied!
+Fill out the variables.tf files in the root directory and within the modules. Add three variables to each file: region, zone, and project_id. For their default values, use us-central1, us-central1-c, and your Google Cloud Project ID.
+Note: You should use these variables anywhere applicable in your resource configurations.
+Add the Terraform block and the Google Provider to the main.tf file. Verify the zone argument is added along with the project and region arguments in the Google Provider block.
+ChatGPT said:
+Here’s how to create the required Terraform directory structure and configuration files in Cloud Shell. This setup will use the region, zone, and project_id variables throughout, and define a Terraform block with the Google provider.
+
+✅ Step 1: Create Directory Structure
+Run this in Cloud Shell:
+
+mkdir -p terraform-project/modules/instances
+mkdir -p terraform-project/modules/storage
+cd terraform-project
+touch main.tf variables.tf
+touch modules/instances/{instances.tf,outputs.tf,variables.tf}
+touch modules/storage/{storage.tf,outputs.tf,variables.tf}
+
+✅ Step 2: Root variables.tf
+variable "project_id" {
+type = string
+default = "your-google-cloud-project-id"
+}
+
+variable "region" {
+type = string
+default = "us-central1"
+}
+
+variable "zone" {
+type = string
+default = "us-central1-c"
+}
+Replace "your-google-cloud-project-id" with your actual project ID.
+
+✅ Root main.tf
+terraform {
+required_providers {
+google = {
+source = "hashicorp/google"
+version = "~> 4.0"
+}
+}
+
+required_version = ">= 1.3.0"
+}
+
+provider "google" {
+project = var.project_id
+region = var.region
+zone = var.zone
+}
+✅ modules/instances/variables.tf
+variable "project_id" {
+type = string
+default = "your-google-cloud-project-id"
+}
+
+variable "region" {
+type = string
+default = "us-central1"
+}
+
+variable "zone" {
+type = string
+default = "us-central1-c"
+}
+✅ modules/storage/variables.tf
+variable "project_id" {
+type = string
+default = "your-google-cloud-project-id"
+}
+
+variable "region" {
+type = string
+default = "us-central1"
+}
+
+variable "zone" {
+type = string
+default = "us-central1-c"
+}
+Once this setup is complete, you can begin defining your actual resources in instances.tf and storage.tf, using the variables like so:
+
+resource "google_compute_instance" "example" {
+name = "my-instance"
+machine_type = "e2-medium"
+zone = var.zone
+...
+}
+Would you like help filling out the sample instances.tf or storage.tf with example resources?
+
+You said:
+Two instances named tf-instance-1 and tf-instance-2 have already been created for you.
+Note: by clicking on one of the instances, you can find its Instance ID, boot disk image, and machine type. These are all necessary for writing the configurations correctly and importing them into Terraform.
+Import the existing instances into the instances module. To do this, you will need to follow these steps:
+First, add the module reference into the main.tf file then re-initialize Terraform.
+Next, write the resource configurations in the instances.tf file to match the pre-existing instances.
+Name your instances tf-instance-1 and tf-instance-2.
+For the purposes of this lab, the resource configuration should be as minimal as possible. To accomplish this, you will only need to include the following additional arguments in your configuration: machine_type, boot_disk, network_interface, metadata_startup_script, and allow_stopping_for_update. For the last two arguments, use the following configuration as this will ensure you won't need to recreate it:
+metadata_startup_script = <<-EOT
+#!/bin/bash
+EOT
+allow_stopping_for_update = true
+ChatGPT said:
+To import the existing tf-instance-1 and tf-instance-2 into the Terraform instances module and write minimal resource configuration, follow these steps:
+
+✅ Step 1: Add Module Block to main.tf
+In main.tf, add the instances module:
+
+module "instances" {
+source = "./modules/instances"
+project_id = var.project_id
+region = var.region
+zone = var.zone
+}
+Then run:
+
+terraform init
+✅ Step 2: Write instances.tf Configuration
+In modules/instances/instances.tf, define the two resources with minimal configuration. Use placeholders for the boot_disk and machine_type until you gather them from the Console:
+
+resource "google_compute_instance" "tf_instance_1" {
+name = "tf-instance-1"
+machine_type = "e2-medium" # Replace with actual
+zone = var.zone
+project = var.project_id
+
+boot_disk {
+initialize_params {
+image = "debian-cloud/debian-11" # Replace with actual
+}
+}
+
+network_interface {
+network = "default"
+access_config {}
+}
+
+metadata_startup_script = <<-EOT
+#!/bin/bash
+EOT
+
+allow_stopping_for_update = true
+}
+
+resource "google_compute_instance" "tf_instance_2" {
+name = "tf-instance-2"
+machine_type = "e2-medium" # Replace with actual
+zone = var.zone
+project = var.project_id
+
+boot_disk {
+initialize_params {
+image = "debian-cloud/debian-11" # Replace with actual
+}
+}
+
+network_interface {
+network = "default"
+access_config {}
+}
+
+metadata_startup_script = <<-EOT
+#!/bin/bash
+EOT
+
+allow_stopping_for_update = true
+}
+Tip: Go to the Cloud Console → Compute Engine → Click on each instance to find:
+
+Instance ID
+
+Boot disk image
+
+Machine type
+
+✅ Step 3: Import the Instances
+Replace [PROJECT], [ZONE], and [ID] with real values from GCP.
+
+Example:
+
+terraform import module.instances.google_compute_instance.tf_instance_1 projects/YOUR_PROJECT_ID/zones/us-central1-c/instances/tf-instance-1
+
+terraform import module.instances.google_compute_instance.tf_instance_2 projects/YOUR_PROJECT_ID/zones/us-central1-c/instances/tf-instance-2
+✅ Step 4: Verify
+Run:
+
+terraform plan
+It should show no changes if your config matches the real instances.
+
+Would you like help locating the boot disk image and machine type from your GCP Console?
+
+You said:
+Create a Cloud Storage bucket resource inside the storage module. For the bucket name, use tf-bucket-335240. For the rest of the arguments, you can simply use:
+
+location = "US"
+force_destroy = true
+uniform_bucket_level_access = true
+Note: You can optionally add output values inside of the outputs.tf file.
+Add the module reference to the main.tf file. Initialize the module and apply the changes to create the bucket using Terraform.
+
+Configure this storage bucket as the remote backend inside the main.tf file. Be sure to use the prefix terraform/state so it can be graded successfully.
+ChatGPT said:
+Here’s how to create the Cloud Storage bucket inside the storage module and use it as a Terraform remote backend. We’ll go step-by-step.
+
+✅ Step 1: Define the Bucket in modules/storage/storage.tf
+resource "google_storage_bucket" "tf_bucket" {
+name = "tf-bucket-335240"
+location = "US"
+force_destroy = true
+uniform_bucket_level_access = true
+}
+✅ Step 2: Add Output (Optional) in modules/storage/outputs.tf
+output "bucket_name" {
+value = google_storage_bucket.tf_bucket.name
+}
+✅ Step 3: Add Module Block to Root main.tf
+Add this below the instances module:
+
+module "storage" {
+source = "./modules/storage"
+project_id = var.project_id
+region = var.region
+zone = var.zone
+}
+✅ Step 4: Initialize & Apply to Create the Bucket
+terraform init
+terraform apply -auto-approve
+✅ Step 5: Configure Remote Backend in main.tf
+⚠️ Move this to the very top of your main.tf (before terraform { required_providers { ... } }):
+
+terraform {
+backend "gcs" {
+bucket = "tf-bucket-335240"
+prefix = "terraform/state"
+}
+
+required_providers {
+google = {
+source = "hashicorp/google"
+version = "~> 4.0"
+}
+}
+
+required_version = ">= 1.3.0"
+}
+✅ Step 6: Reinitialize Terraform with Backend
+Since you're changing the backend, reinitialize Terraform:
+
+terraform init
+Terraform will ask if you want to copy the existing state to the new backend. Type yes to proceed.
+
+You're now using the Cloud Storage bucket as a remote backend and have fulfilled the requirements. Want to confirm everything’s working with a terraform plan or review the directory structure?
+
+You said:
+Use a module from the Registry
+ChatGPT said:
+To use a module from the Terraform Registry, follow these steps. For this example, let’s use a Google Cloud VM instance module from the registry.
+
+✅ Step 1: Find a Registry Module
+Visit: https://registry.terraform.io/modules
+
+Search for something like:
+📦 terraform-google-modules/vm/google
+
+✅ Step 2: Add the Module to main.tf
+Add a block like this in your main.tf:
+
+module "vm_from_registry" {
+source = "terraform-google-modules/vm/google"
+version = "~> 7.9.0"
+
+project_id = var.project_id
+region = var.region
+zone = var.zone
+name = "registry-vm"
+instance_count = 1
+machine_type = "e2-medium"
+source_image_family = "debian-11"
+source_image_project = "debian-cloud"
+subnetwork = "default"
+}
+This uses a public module that deploys VM instances with flexible options.
+
+✅ Step 3: Initialize and Apply
+terraform init
+terraform apply -auto-approve
+This will create a VM using the public module. You can explore the module’s full input options at the Terraform Registry page.
+
+Would you like help choosing a different kind of module (like networking, GKE, or Cloud SQL)?
+
+You said:
+Use version 6.0.0 (different versions might cause compatibility errors).
+Name the VPC tf-vpc-448496, and use a global routing mode.
+Specify 2 subnets in the us-central1 region, and name them subnet-01 and subnet-02. For the subnets arguments, you just need the Name, IP, and Region.
+Use the IP 10.10.10.0/24 for subnet-01, and 10.10.20.0/24 for subnet-02.
+You do not need any secondary ranges or routes associated with this VPC, so you can omit them from the configuration.
+Once you've written the module configuration, initialize Terraform and run an apply to create the networks.
+
+Next, navigate to the instances.tf file and update the configuration resources to connect tf-instance-1 to subnet-01 and tf-instance-2 to subnet-02.
+
+Note: Within the instance configuration, you will need to update the network argument to tf-vpc-448496, and then add the subnetwork argument with the correct subnet for each instance.
+ChatGPT said:
+Here’s a step-by-step guide to meet your requirements using the Terraform Registry VPC module:
+
+✅ Step 1: Use the VPC Module (v6.0.0)
+In your main.tf, add the following block:
+
+module "tf_vpc" {
+source = "terraform-google-modules/network/google"
+version = "6.0.0"
+
+project_id = var.project_id
+network_name = "tf-vpc-448496"
+routing_mode = "GLOBAL"
+
+subnets = [
+{
+subnet_name = "subnet-01"
+subnet_ip = "10.10.10.0/24"
+subnet_region = "us-central1"
+},
+{
+subnet_name = "subnet-02"
+subnet_ip = "10.10.20.0/24"
+subnet_region = "us-central1"
+}
+]
+}
+✅ Step 2: Initialize & Apply
+terraform init
+terraform apply -auto-approve
+This will create the VPC and both subnets using the specified module and IP ranges.
+
+✅ Step 3: Update instances.tf to Use New Subnets
+In modules/instances/instances.tf, update the two instances like so:
+
+resource "google_compute_instance" "tf_instance_1" {
+name = "tf-instance-1"
+machine_type = "e2-medium"
+zone = var.zone
+project = var.project_id
+
+boot_disk {
+initialize_params {
+image = "debian-cloud/debian-11"
+}
+}
+
+network_interface {
+network = "tf-vpc-448496"
+subnetwork = "subnet-01"
+access_config {}
+}
+
+metadata_startup_script = <<-EOT
+#!/bin/bash
+EOT
+
+allow_stopping_for_update = true
+}
+
+resource "google_compute_instance" "tf_instance_2" {
+name = "tf-instance-2"
+machine_type = "e2-medium"
+zone = var.zone
+project = var.project_id
+
+boot_disk {
+initialize_params {
+image = "debian-cloud/debian-11"
+}
+}
+
+network_interface {
+network = "tf-vpc-448496"
+subnetwork = "subnet-02"
+access_config {}
+}
+
+metadata_startup_script = <<-EOT
+#!/bin/bash
+EOT
+
+allow_stopping_for_update = true
+}
+✅ Final Step: Re-Apply
+After updating instances.tf, run:
+
+terraform apply -auto-approve
+This will update the network interface on both instances to connect them to the correct subnets.
+
+Would you like to output the VPC or subnet names as confirmation in Terraform?
+
+You said:
+Create a firewall rule resource in the main.tf file, and name it tf-firewall.
+This firewall rule should permit the tf-vpc-448496 network to allow ingress connections on all IP ranges (0.0.0.0/0) on TCP port 80.
+Make sure you add the source_ranges argument with the correct IP range (0.0.0.0/0).
+Initialize Terraform and apply your changes.
+Note: To retrieve the required network argument, you can inspect the state and find the ID or self_link of the google_compute_network resource you created. It will be in the form projects/PROJECT_ID/global/networks/tf-vpc-448496.
+ChatGPT said:
+Here’s how to create the tf-firewall rule that allows HTTP ingress on port 80 from all IPs in your existing tf-vpc-448496 VPC.
+
+✅ Step 1: Inspect the Network Resource
+Run this command to find the correct self_link for your VPC:
+
+terraform state show module.tf_vpc.google_compute_network.network
+Look for the value of self_link, which will look like:
+
+self_link = "projects/YOUR_PROJECT_ID/global/networks/tf-vpc-448496"
+You can use this string directly in the firewall rule or dynamically refer to it.
+
+✅ Step 2: Add Firewall Resource to main.tf
+Add this outside of your module blocks:
+
+resource "google_compute_firewall" "tf_firewall" {
+name = "tf-firewall"
+network = module.tf_vpc.network_self_link
+
+allow {
+protocol = "tcp"
+ports = ["80"]
+}
+
+direction = "INGRESS"
+source_ranges = ["0.0.0.0/0"]
+}
+module.tf_vpc.network_self_link is a standard output from the registry module, which refers to the correct VPC network ID.
+
+✅ Step 3: Initialize and Apply
+terraform init
+terraform apply -auto-approve
+This creates the firewall rule allowing port 80 (HTTP) traffic to any resource inside your VPC.
+
+Would you like to restrict this rule further or add logging options?
+//////////////////////

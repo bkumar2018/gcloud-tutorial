@@ -1,0 +1,269 @@
+gcloud auth list
+gcloud config list project
+gcloud config set compute/region us-east4
+
+Task 4. Create a custom role
+To create a custom role, a caller must possess iam.roles.create permission. By default, the owner of a project or an organization has this permission and can create and manage custom roles.
+
+Users who are not owners, including organization admins, must be assigned either the Organization Role Administrator role, or the IAM Role Administrator role.
+
+Use the gcloud iam roles create command to create new custom roles in two ways:
+
+Provide a YAML file that contains the role definition
+Specify the role definition using flags
+When creating a custom role, you must specify whether it applies to the organization level or project level by using the --organization [ORGANIZATION_ID] or --project [PROJECT_ID] flags. Each example below creates a custom role at the project level.
+
+In the next sections you create custom roles at the project level.
+
+Create a custom role using a YAML file
+Create a YAML file that contains the definition for your custom role. The file must be structured in the following way:
+
+title: [ROLE_TITLE]
+description: [ROLE_DESCRIPTION]
+stage: [LAUNCH_STAGE]
+includedPermissions:
+
+- [PERMISSION_1]
+- [PERMISSION_2]
+  Each of the placeholder values is described below:
+
+[ROLE_TITLE] is a friendly title for the role, such as Role Viewer.
+[ROLE_DESCRIPTION] is a short description about the role, such as My custom role description.
+[LAUNCH_STAGE] indicates the stage of a role in the launch lifecycle, such as ALPHA, BETA, or GA.
+includedPermissions specifies the list of one or more permissions to include in the custom role, such as iam.roles.get.
+Time to get started! Create your role definition YAML file by running:
+nano role-definition.yaml
+
+Add this custom role definition to the YAML file:
+title: "Role Editor"
+description: "Edit access for App Versions"
+stage: "ALPHA"
+includedPermissions:
+
+- appengine.versions.create
+- appengine.versions.delete
+  
+  Then save and close the file by pressing CTRL+X, Y and then ENTER.
+
+Execute the following gcloud command:
+
+gcloud iam roles create editor --project $DEVSHELL_PROJECT_ID \
+--file role-definition.yaml
+Copied!
+If the role was created successfully, the following response is returned:
+
+Created role [editor].
+description: Edit access for App Versions
+etag: BwVs4O4E3e4=
+includedPermissions:
+
+- appengine.versions.create
+- appengine.versions.delete
+  name: projects/qwiklabs-gcp-03-344de34c31ab/roles/editor
+  stage: ALPHA
+  title: Role Editor
+
+gcloud iam roles create editor --project $DEVSHELL_PROJECT_ID \
+--file role-definition.yaml
+
+Create a custom role using flags:
+
+gcloud iam roles create viewer --project $DEVSHELL_PROJECT_ID \
+--title "Role Viewer" --description "Custom role description." \
+--permissions compute.instances.get,compute.instances.list --stage ALPHA
+
+Task 5. List the custom roles
+Execute the following gcloud command to list custom roles, specifying either project-level or organization-level custom roles:
+gcloud iam roles list --project $DEVSHELL_PROJECT_ID
+Copied!
+
+////
+vim role-definition.yaml
+.......
+title: "Role Editor"
+description: "Edit access for App Versions"
+stage: "ALPHA"
+includedPermissions:
+
+- appengine.versions.create
+- appengine.versions.delete
+  ........
+
+student_02_81f917a37aef@cloudshell:~ (qwiklabs-gcp-01-1799bc243cc2)$ gcloud iam roles create editor --project $DEVSHELL_PROJECT_ID \
+--file role-definition.yaml
+Created role [editor].
+description: Edit access for App Versions
+etag: BwY0Mv0n3ug=
+includedPermissions:
+
+- appengine.versions.create
+- appengine.versions.delete
+  name: projects/qwiklabs-gcp-01-1799bc243cc2/roles/editor
+  stage: ALPHA
+  title: Role Editor
+
+create custom role using flag:
+gcloud iam roles create viewer --project $DEVSHELL_PROJECT_ID \
+--title "Role Viewer" --description "Custom role description." \
+--permissions compute.instances.get,compute.instances.list --stage ALPHA
+
+student_02_81f917a37aef@cloudshell:~ (qwiklabs-gcp-01-1799bc243cc2)$ gcloud iam roles create viewer --project $DEVSHELL_PROJECT_ID \
+--title "Role Viewer" --description "Custom role description." \
+--permissions compute.instances.get,compute.instances.list --stage ALPHA
+Created role [viewer].
+description: Custom role description.
+etag: BwY0MwNEMnE=
+includedPermissions:
+
+- compute.instances.get
+- compute.instances.list
+  name: projects/qwiklabs-gcp-01-1799bc243cc2/roles/viewer
+  stage: ALPHA
+  title: Role Viewer
+
+Task 5. List the custom roles
+Execute the following gcloud command to list custom roles, specifying either project-level or organization-level custom roles:
+gcloud iam roles list --project $DEVSHELL_PROJECT_ID
+
+## student_02_81f917a37aef@cloudshell:~ (qwiklabs-gcp-01-1799bc243cc2)$ gcloud iam roles list --project $DEVSHELL_PROJECT_ID
+
+description: Edit access for App Versions
+etag: BwY0Mv0n3ug=
+name: projects/qwiklabs-gcp-01-1799bc243cc2/roles/editor
+title: Role Editor
+
+---
+
+description: Custom role description.
+etag: BwY0MwNEMnE=
+name: projects/qwiklabs-gcp-01-1799bc243cc2/roles/viewer
+title: Role Viewer
+student_02_81f917a37aef@cloudshell:~ (qwiklabs-gcp-01-1799bc243cc2)$
+
+gcloud iam roles describe [ROLE_ID] --project $DEVSHELL_PROJECT_ID
+
+student_02_81f917a37aef@cloudshell:~ (qwiklabs-gcp-01-1799bc243cc2)$ gcloud iam roles describe editor --project $DEVSHELL_PROJECT_ID
+description: Edit access for App Versions
+etag: BwY0Mv0n3ug=
+includedPermissions:
+
+- appengine.versions.create
+- appengine.versions.delete
+  name: projects/qwiklabs-gcp-01-1799bc243cc2/roles/editor
+  stage: ALPHA
+  title: Role Editor
+  student_02_81f917a37aef@cloudshell:~ (qwiklabs-gcp-01-1799bc243cc2)$
+
+## Update a custom role using a YAML file:
+
+student_02_81f917a37aef@cloudshell:~ (qwiklabs-gcp-01-1799bc243cc2)$ cat new-role-definition.yaml
+description: Edit access for App Versions
+etag: BwY0Mv0n3ug=
+includedPermissions:
+
+- appengine.versions.create
+- appengine.versions.delete
+- storage.buckets.get
+- storage.buckets.list
+  name: projects/qwiklabs-gcp-01-1799bc243cc2/roles/editor
+  stage: ALPHA
+  title: Role Editor
+
+gcloud iam roles update [ROLE_ID] --project $DEVSHELL_PROJECT_ID \
+--file new-role-definition.yaml
+
+gcloud iam roles update editor --project $DEVSHELL_PROJECT_ID \
+--file new-role-definition.yaml
+
+student_02_81f917a37aef@cloudshell:~ (qwiklabs-gcp-01-1799bc243cc2)$ gcloud iam roles update editor --project $DEVSHELL_PROJECT_ID \
+--file new-role-definition.yaml
+
+description: Edit access for App Versions
+etag: BwY0Mx9CcCM=
+includedPermissions:
+
+- appengine.versions.create
+- appengine.versions.delete
+- storage.buckets.get
+- storage.buckets.list
+  name: projects/qwiklabs-gcp-01-1799bc243cc2/roles/editor
+  stage: ALPHA
+  title: Role Editor
+
+## Update a custom role using flags:
+
+gcloud iam roles update viewer --project $DEVSHELL_PROJECT_ID \
+--add-permissions storage.buckets.get,storage.buckets.list
+
+student_02_81f917a37aef@cloudshell:~ (qwiklabs-gcp-01-1799bc243cc2)$ gcloud iam roles update viewer --project $DEVSHELL_PROJECT_ID \
+--add-permissions storage.buckets.get,storage.buckets.list
+description: Custom role description.
+etag: BwY0MyTpr-Y=
+includedPermissions:
+
+- compute.instances.get
+- compute.instances.list
+- storage.buckets.get
+- storage.buckets.list
+  name: projects/qwiklabs-gcp-01-1799bc243cc2/roles/viewer
+  stage: ALPHA
+  title: Role Viewer
+
+## Disable the custom role
+
+gcloud iam roles update viewer --project $DEVSHELL_PROJECT_ID \
+--stage DISABLED
+
+student_02_81f917a37aef@cloudshell:~ (qwiklabs-gcp-01-1799bc243cc2)$ gcloud iam roles update viewer --project $DEVSHELL_PROJECT_ID \
+--stage DISABLED
+description: Custom role description.
+etag: BwY0MygFRyQ=
+includedPermissions:
+
+- compute.instances.get
+- compute.instances.list
+- storage.buckets.get
+- storage.buckets.list
+  name: projects/qwiklabs-gcp-01-1799bc243cc2/roles/viewer
+  stage: DISABLED
+  title: Role Viewer
+  student_02_81f917a37aef@cloudshell:~ (qwiklabs-gcp-01-1799bc243cc2)$
+
+## Delete the custom role
+
+gcloud iam roles delete viewer --project $DEVSHELL_PROJECT_ID
+
+student_02_81f917a37aef@cloudshell:~ (qwiklabs-gcp-01-1799bc243cc2)$ gcloud iam roles delete viewer --project $DEVSHELL_PROJECT_ID
+deleted: true
+description: Custom role description.
+etag: BwY0Myq57Kg=
+includedPermissions:
+
+- compute.instances.get
+- compute.instances.list
+- storage.buckets.get
+- storage.buckets.list
+  name: projects/qwiklabs-gcp-01-1799bc243cc2/roles/viewer
+  stage: DISABLED
+  title: Role Viewer
+  student_02_81f917a37aef@cloudshell:~ (qwiklabs-gcp-01-1799bc243cc2)$
+
+## Restore custom role
+
+gcloud iam roles undelete viewer --project $DEVSHELL_PROJECT_ID
+
+
+student_02_81f917a37aef@cloudshell:~ (qwiklabs-gcp-01-1799bc243cc2)$ gcloud iam roles undelete viewer --project $DEVSHELL_PROJECT_ID
+description: Custom role description.
+etag: BwY0My0ZVbk=
+includedPermissions:
+- compute.instances.get
+- compute.instances.list
+- storage.buckets.get
+- storage.buckets.list
+name: projects/qwiklabs-gcp-01-1799bc243cc2/roles/viewer
+stage: DISABLED
+title: Role Viewer
+student_02_81f917a37aef@cloudshell:~ (qwiklabs-gcp-01-1799bc243cc2)$ 
+
+

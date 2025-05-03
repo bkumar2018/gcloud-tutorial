@@ -1,0 +1,262 @@
+Topics tested:
+
+Create a custom security role.
+Create a service account.
+Bind IAM security roles to a service account.
+Create a private Kubernetes Engine cluster in a custom subnet.
+Deploy an application to a private Kubernetes Engine cluster
+
+use the us-central1 region and the us-central1-c zone.
+
+export REGION=us-central1
+export ZONE=us-central1-c
+
+The Kubernetes Engine private cluster must be deployed to the orca-build-subnet in the Orca Build VPC.
+
+the minimum permissions required by the service account that is specified for a Kubernetes Engine cluster is covered by these three built in roles:
+
+roles/monitoring.viewer
+roles/monitoring.metricWriter
+roles/logging.logWriter
+
+create a new custom IAM role that will provide the following permissions:
+
+storage.buckets.get
+storage.objects.get
+storage.objects.list
+storage.objects.update
+storage.objects.create
+
+vim role-definition.yaml
+
+title: "Role Editor"
+description: "Edit access for App Versions"
+stage: "ALPHA"
+includedPermissions:
+
+- appengine.versions.create
+- appengine.versions.delete
+
+or using command flags
+
+gcloud iam roles create orca_storage_editor_282 \
+ --project=$DEVSHELL_PROJECT_ID \
+ --title="Orca Storage Editor 282" \
+ --description="Can create and update objects in Cloud Storage" \
+ --permissions="storage.buckets.get,storage.objects.create,storage.objects.update,storage.objects.get,storage.objects.list" \
+ --stage="GA"
+
+.......
+
+Task 1. Create a custom security role
+
+student_02_fef87e802fb8@cloudshell:~ (qwiklabs-gcp-01-3aa40d3b951a)$ gcloud iam roles create orca_storage_editor_282 \
+ --project=$DEVSHELL_PROJECT_ID \
+ --title="Orca Storage Editor 282" \
+ --description="Can create and update objects in Cloud Storage" \
+ --permissions="storage.buckets.get,storage.objects.create,storage.objects.update,storage.objects.get,storage.objects.list" \
+ --stage="GA"
+
+Created role [orca_storage_editor_282].
+description: Can create and update objects in Cloud Storage
+etag: BwY0ObVxlkc=
+includedPermissions:
+
+- storage.buckets.get
+- storage.objects.create
+- storage.objects.get
+- storage.objects.list
+- storage.objects.update
+  name: projects/qwiklabs-gcp-01-3aa40d3b951a/roles/orca_storage_editor_282
+  stage: GA
+  title: Orca Storage Editor 282
+  student_02_fef87e802fb8@cloudshell:~ (qwiklabs-gcp-01-3aa40d3b951a)$
+
+..........
+
+Task 2. Create a service account
+
+From a previous project you know that the minimum permissions required by the service account that is specified for a Kubernetes Engine cluster is covered by these three built in roles:
+
+roles/monitoring.viewer
+roles/monitoring.metricWriter
+roles/logging.logWriter
+
+gcloud iam service-accounts create orca-private-cluster-583-sa \
+ --description="Service account for private GKE cluster orca-private-cluster-583" \
+ --display-name="orca-private-cluster-583-sa"
+
+student_02_fef87e802fb8@cloudshell:~ (qwiklabs-gcp-01-3aa40d3b951a)$ gcloud iam service-accounts create orca-private-cluster-583-sa \
+ --description="Service account for private GKE cluster orca-private-cluster-583" \
+ --display-name="orca-private-cluster-583-sa"
+
+Created service account [orca-private-cluster-583-sa].
+student_02_fef87e802fb8@cloudshell:~ (qwiklabs-gcp-01-3aa40d3b951a)$
+
+Task 3. Bind a custom security role to a service account
+
+PROJECT_ID="your-project-id"
+PROJECT_ID=qwiklabs-gcp-01-3aa40d3b951a
+SA_EMAIL="orca-private-cluster-583-sa@${PROJECT_ID}.iam.gserviceaccount.com"
+
+From a previous project you know that the minimum permissions required by the service account that is specified for a Kubernetes Engine cluster is covered by these three built in roles:
+
+roles/monitoring.viewer
+roles/monitoring.metricWriter
+roles/logging.logWriter
+
+# Bind Cloud Monitoring role
+
+gcloud projects add-iam-policy-binding "$PROJECT_ID" \
+  --member="serviceAccount:$SA_EMAIL" \
+ --role="roles/monitoring.metricWriter"
+
+# Bind Cloud Monitoring role
+
+gcloud projects add-iam-policy-binding "$PROJECT_ID" \
+  --member="serviceAccount:$SA_EMAIL" \
+ --role="roles/monitoring.viewer"
+
+# Bind Cloud Logging role
+
+gcloud projects add-iam-policy-binding "$PROJECT_ID" \
+  --member="serviceAccount:$SA_EMAIL" \
+ --role="roles/logging.logWriter"
+
+# Bind the custom IAM role
+
+gcloud projects add-iam-policy-binding "$PROJECT_ID" \
+  --member="serviceAccount:$SA_EMAIL" \
+ --role="projects/$PROJECT_ID/roles/orca_storage_editor_282"
+
+Task 4. Create and configure a new Kubernetes Engine private cluster
+You must now use the service account you have configured when creating a new Kubernetes Engine private cluster. The new cluster configuration must include the following:
+
+The cluster must be called orca-cluster-580
+The cluster must be deployed to the subnet orca-build-subnet
+The cluster must be configured to use the orca-private-cluster-583-sa service account.
+The private cluster options enable-master-authorized-networks, enable-ip-alias, enable-private-nodes, and enable-private-endpoint must be enabled.
+Once the cluster is configured you must add the internal ip-address of the orca-jumphost compute instance to the master authorized network list.
+
+orca-build-vpc
+orca-build-subnet 192.168.11.0/24
+orca-mgmt-subnet 192.168.10.0/24
+
+gcloud container clusters create orca-cluster-580 \
+ --region=REGION \
+ --subnetwork=orca-build-subnet \
+ --network=orca-build-vpc \
+ --service-account=orca-private-cluster-583-sa@PROJECT_ID.iam.gserviceaccount.com \
+ --enable-ip-alias \
+ --enable-private-nodes \
+ --enable-private-endpoint \
+ --enable-master-authorized-networks \
+ --master-authorized-networks=YOUR_PUBLIC_IP/32 \
+ --no-enable-basic-auth \
+ --no-issue-client-certificate \
+ --release-channel=regular \
+ --project=PROJECT_ID
+
+--enable-master-authorized-networks \
+ --master-authorized-networks=172.16.0.32/28 \
+
+gcloud beta container clusters create orca-cluster-580 \
+ --enable-private-nodes \
+ --enable-ip-alias \
+ --master-ipv4-cidr 172.16.0.32/28 \
+ --subnetwork=orca-build-subnet \
+ --network=orca-build-vpc \
+ --service-account=$SA_EMAIL \
+ --zone=$ZONE
+
+orca-private-cluster-583-sa@qwiklabs-gcp-01-3aa40d3b951a.iam.gserviceaccount.com
+
+Once the cluster is configured you must add the internal ip-address of the orca-jumphost compute instance to the master authorized network list.
+
+orca-jumphost
+
+gcloud compute instances describe orca-jumphost --zone=$ZONE | grep natIP
+
+student_02_fef87e802fb8@cloudshell:~ (qwiklabs-gcp-01-3aa40d3b951a)$ gcloud compute instances describe orca-jumphost --zone=$ZONE | grep natIP
+    natIP: 34.60.249.36
+student_02_fef87e802fb8@cloudshell:~ (qwiklabs-gcp-01-3aa40d3b951a)$
+
+/////
+
+gcloud container clusters delete orca-cluster-580 --zone=$ZONE
+
+The private cluster options
+enable-master-authorized-networks,
+enable-ip-alias,
+enable-private-nodes, and
+enable-private-endpoint must be enabled.
+
+gcloud beta container clusters create orca-cluster-580 \
+ --enable-private-nodes \
+ --enable-private-endpoint \
+ --enable-ip-alias \
+ --master-ipv4-cidr 172.16.0.32/28 \
+ --subnetwork=orca-build-subnet \
+ --network=orca-build-vpc \
+ --service-account=$SA_EMAIL \
+ --zone=$ZONE
+
+I - 192.168.10.2
+E - 34.60.249.36
+
+gcloud container clusters update orca-cluster-580 \
+ --enable-master-authorized-networks \
+ --master-authorized-networks 192.168.10.2/32 \
+ --zone=$ZONE
+
+Task 5. Deploy an application to a private Kubernetes Engine cluster
+
+Tip1
+sudo apt-get install google-cloud-sdk-gke-gcloud-auth-plugin
+echo "export USE_GKE_GCLOUD_AUTH_PLUGIN=True" >> ~/.bashrc
+source ~/.bashrc
+gcloud container clusters get-credentials <your cluster name> --internal-ip --project=<project ID> --zone <cluster zone>
+
+Tip 2. When adding the internal ip-address of the orca-jumphost machine to the list of authorized addresses for the private Kubernetes Engine cluster you should use a /32 netmask to ensure that only the specific compute instance is authorized.
+
+Tip 3. You cannot connect directly to a Kubernetes Engine private cluster from a VPC or other network outside of the VPC the private cluster has been deployed to if the enable-private-endpoint option has been specified. This represents the highest security option for a private cluster and you must use a jumphost, or a proxy within the same VPC as the cluster, and you must use that jumphost or proxy to connect to the internal managment ip-address for the cluster.
+
+## ssh to jumphost machine from cloudshell:
+
+gcloud compute ssh orca-jumphost --zone=$ZONE
+
+sudo apt-get install google-cloud-sdk-gke-gcloud-auth-plugin
+gcloud container clusters get-credentials orca-cluster-580 --zone=$ZONE
+
+export REGION=us-central1
+export ZONE=us-central1-c
+
+kubectl get nodes --output yaml | grep -A4 addresses
+
+kubectl create deployment hello-server --image=gcr.io/google-samples/hello-app:1.0
+
+student-02-fef87e802fb8@orca-jumphost:~$ kubectl get pods
+NAME READY STATUS RESTARTS AGE
+hello-server-bdd7946bc-2b27l 1/1 Running 0 45s
+student-02-fef87e802fb8@orca-jumphost:~$
+student-02-fef87e802fb8@orca-jumphost:~$ kubectl get deployment
+NAME READY UP-TO-DATE AVAILABLE AGE
+hello-server 1/1 1 1 89s
+student-02-fef87e802fb8@orca-jumphost:~$
+
+student-02-fef87e802fb8@orca-jumphost:~$ kubectl get nodes -o wide
+NAME STATUS ROLES AGE VERSION INTERNAL-IP EXTERNAL-IP OS-IMAGE KERNEL-VERSION CONTAINER-RUNTIME
+gke-orca-cluster-580-default-pool-09128969-g4bv Ready <none> 12m v1.32.2-gke.1182003 192.168.11.6 <none> Container-Optimized OS from Google 6.6.72+ containerd://1.7.24
+gke-orca-cluster-580-default-pool-09128969-zdd1 Ready <none> 12m v1.32.2-gke.1182003 192.168.11.5 <none> Container-Optimized OS from Google 6.6.72+ containerd://1.7.24
+gke-orca-cluster-580-default-pool-09128969-zhvd Ready <none> 12m v1.32.2-gke.1182003 192.168.11.7 <none> Container-Optimized OS from Google 6.6.72+ containerd://1.7.24
+student-02-fef87e802fb8@orca-jumphost:~$
+
+/////
+Topics tested
+Create a custom security role.
+Create a service account.
+Bind IAM security roles to a service account.
+Create a private Kubernetes Engine cluster in a custom subnet.
+Deploy an application to a private Kubernetes Engine cluster
+
+////
