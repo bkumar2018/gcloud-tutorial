@@ -242,14 +242,13 @@ student_02_e4b24d331200@cloudshell:~ (qwiklabs-gcp-02-1f29d532a3fb)$ curl -v "ht
 - [HTTP/2] [1] [:path: /v1/projects/qwiklabs-gcp-02-1f29d532a3fb/locations/global/keyRings/test/cryptoKeys/qwiklab:encrypt]
 - [HTTP/2] [1] [user-agent: curl/8.5.0]
 - [HTTP/2] [1] [accept: */*]
-- [HTTP/2] [1] [authorization: Bearer ya29.a0AZYkNZhJwex_2RAQaTGEguIx2s2729S6o-4ROkWj8YLqFxpLivQI5L2hMi6qPO0xZkrjojoIjxB0ZzltxD6K4rucoaheWWZ46nkK4Yahm4-4pzwUW5rMUzd9nIFzZMg-ck2054rl1_QeRQwRLLdJmbeKIbGkVqDjMqmou4xdH8VQsNDkt72kc-PdpZiqy295DpI1FdDvI9Z_pK7Sfno9BR5AisxMVy1UNy0pft5W7uKcFCfiwFEyoQRGgSrqdYv8zyftA5eZmnTAljjF_clEpRqYBe88Cx6tYzvYJjOFAM8mDj5F2PsgigiMgkvtzqh1kNXrgaROPZ1FR7jk-BfO6HwotM_kXyodfQj48s2ZXJNgbY_1ccLS4BUJtQU-R-2mDoI7GbjMTdTi0uXOamzq3eTt6yhTN8XEb81YaCgYKAc8SARYSFQHGX2MiYokxgyWIHUtw9AARzL6JHw0427]
 - [HTTP/2] [1] [content-type: application/json]
 - [HTTP/2] [1] [content-length: 2384]
   > POST /v1/projects/qwiklabs-gcp-02-1f29d532a3fb/locations/global/keyRings/test/cryptoKeys/qwiklab:encrypt HTTP/2
   > Host: cloudkms.googleapis.com
   > User-Agent: curl/8.5.0
   > Accept: _/_
-  > Authorization:Bearer ya29.a0AZYkNZhJwex_2RAQaTGEguIx2s2729S6o-4ROkWj8YLqFxpLivQI5L2hMi6qPO0xZkrjojoIjxB0ZzltxD6K4rucoaheWWZ46nkK4Yahm4-4pzwUW5rMUzd9nIFzZMg-ck2054rl1_QeRQwRLLdJmbeKIbGkVqDjMqmou4xdH8VQsNDkt72kc-PdpZiqy295DpI1FdDvI9Z_pK7Sfno9BR5AisxMVy1UNy0pft5W7uKcFCfiwFEyoQRGgSrqdYv8zyftA5eZmnTAljjF_clEpRqYBe88Cx6tYzvYJjOFAM8mDj5F2PsgigiMgkvtzqh1kNXrgaROPZ1FR7jk-BfO6HwotM_kXyodfQj48s2ZXJNgbY_1ccLS4BUJtQU-R-2mDoI7GbjMTdTi0uXOamzq3eTt6yhTN8XEb81YaCgYKAc8SARYSFQHGX2MiYokxgyWIHUtw9AARzL6JHw0427
+  
   > Content-Type: application/json
   > Content-Length: 2384
   >
@@ -331,7 +330,6 @@ Dload Upload Total Spent Left Speed
 - [HTTP/2] [1] [:path: /v1/projects/qwiklabs-gcp-02-1f29d532a3fb/locations/global/keyRings/test/cryptoKeys/qwiklab:encrypt]
 - [HTTP/2] [1] [user-agent: curl/8.5.0]
 - [HTTP/2] [1] [accept: */*]
-- [HTTP/2] [1] [authorization: Bearer ya29.a0AZYkNZhJwex_2RAQaTGEguIx2s2729S6o-4ROkWj8YLqFxpLivQI5L2hMi6qPO0xZkrjojoIjxB0ZzltxD6K4rucoaheWWZ46nkK4Yahm4-4pzwUW5rMUzd9nIFzZMg-ck2054rl1_QeRQwRLLdJmbeKIbGkVqDjMqmou4xdH8VQsNDkt72kc-PdpZiqy295DpI1FdDvI9Z_pK7Sfno9BR5AisxMVy1UNy0pft5W7uKcFCfiwFEyoQRGgSrqdYv8zyftA5eZmnTAljjF_clEpRqYBe88Cx6tYzvYJjOFAM8mDj5F2PsgigiMgkvtzqh1kNXrgaROPZ1FR7jk-BfO6HwotM_kXyodfQj48s2ZXJNgbY_1ccLS4BUJtQU-R-2mDoI7GbjMTdTi0uXOamzq3eTt6yhTN8XEb81YaCgYKAc8SARYSFQHGX2MiYokxgyWIHUtw9AARzL6JHw0427]
 - [HTTP/2] [1] [content-type: application/json]
 - [HTTP/2] [1] [content-length: 2384]
   } [5 bytes data]
@@ -339,8 +337,6 @@ Dload Upload Total Spent Left Speed
   > Host: cloudkms.googleapis.com
   > User-Agent: curl/8.5.0
   > Accept: _/_
-  > Authorization:Bearer ya29.a0AZYkNZhJwex_2RAQaTGEguIx2s2729S6o-4ROkWj8YLqFxpLivQI5L2hMi6qPO0xZkrjojoIjxB0ZzltxD6K4rucoaheWWZ46nkK4Yahm4-4pzwUW5rMUzd9nIFzZMg-ck2054rl1_QeRQwRLLdJmbeKIbGkVqDjMqmou4xdH8VQsNDkt72kc-PdpZiqy295DpI1FdDvI9Z_pK7Sfno9BR5AisxMVy1UNy0pft5W7uKcFCfiwFEyoQRGgSrqdYv8zyftA5eZmnTAljjF_clEpRqYBe88Cx6tYzvYJjOFAM8mDj5F2PsgigiMgkvtzqh1kNXrgaROPZ1FR7jk-BfO6HwotM_kXyodfQj48s2ZXJNgbY_1ccLS4BUJtQU-R-2mDoI7GbjMTdTi0uXOamzq3eTt6yhTN8XEb81YaCgYKAc8SARYSFQHGX2MiYokxgyWIHUtw9AARzL6JHw0427
-  > Content-Type:application/json
   > Content-Length: 2384
   >
   > } [2384 bytes data]
@@ -419,7 +415,6 @@ Dload Upload Total Spent Left Speed
 - [HTTP/2] [1] [:path: /v1/projects/qwiklabs-gcp-02-1f29d532a3fb/locations/global/keyRings/test/cryptoKeys/qwiklab:decrypt]
 - [HTTP/2] [1] [user-agent: curl/8.5.0]
 - [HTTP/2] [1] [accept: */*]
-- [HTTP/2] [1] [authorization: Bearer ya29.a0AZYkNZhJwex_2RAQaTGEguIx2s2729S6o-4ROkWj8YLqFxpLivQI5L2hMi6qPO0xZkrjojoIjxB0ZzltxD6K4rucoaheWWZ46nkK4Yahm4-4pzwUW5rMUzd9nIFzZMg-ck2054rl1_QeRQwRLLdJmbeKIbGkVqDjMqmou4xdH8VQsNDkt72kc-PdpZiqy295DpI1FdDvI9Z_pK7Sfno9BR5AisxMVy1UNy0pft5W7uKcFCfiwFEyoQRGgSrqdYv8zyftA5eZmnTAljjF_clEpRqYBe88Cx6tYzvYJjOFAM8mDj5F2PsgigiMgkvtzqh1kNXrgaROPZ1FR7jk-BfO6HwotM_kXyodfQj48s2ZXJNgbY_1ccLS4BUJtQU-R-2mDoI7GbjMTdTi0uXOamzq3eTt6yhTN8XEb81YaCgYKAc8SARYSFQHGX2MiYokxgyWIHUtw9AARzL6JHw0427]
 - [HTTP/2] [1] [content-type: application/json]
 - [HTTP/2] [1] [content-length: 2497]
   } [5 bytes data]
